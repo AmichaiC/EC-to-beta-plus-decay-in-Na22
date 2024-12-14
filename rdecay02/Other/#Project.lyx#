@@ -1,0 +1,650 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass heb-article
+\begin_preamble
+\usepackage[use-david]{culmus}
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language hebrew
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1.5cm
+\topmargin 2cm
+\rightmargin 1.5cm
+\bottommargin 2cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+קבצים
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+ActionInitialization - 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+BiasedRDPhysics - 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+DetectorConstruction - 
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+DetectorMessenger - 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+EventAction - 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+HistoManager - 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+HPGeCalorimeterHit
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+HPGeCalorimeterSD 
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+PhysicsList - 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+PrimaryGeneratorAction - 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+Run - 
+\begin_inset Formula ${\color{orange}\checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+RunAction - 
+\begin_inset Formula ${\color{orange}\checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+SteppingAction - 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+TrackingAction - 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\bar under
+משימות
+\backslash
+בעיות
+\end_layout
+
+\begin_layout Standard
+
+\numeric on
+1
+\numeric off
+.
+ האם הקוד יוצר יון אחד כל פעם או הרבה אטומים במוצק?
+\end_layout
+
+\begin_layout Standard
+
+\numeric on
+2
+\numeric off
+.
+ להוסיף עוד 
+\begin_inset Formula $detector$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\numeric on
+3
+\numeric off
+.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+anaconda navigator - powershell prompt
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+C:
+\backslash
+Users
+\backslash
+amich
+\backslash
+Downloads
+\backslash
+root_v6.32.06.win64.vc17
+\backslash
+root
+\backslash
+bin
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+./root.exe
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+TFile *file = TFile::Open("C:
+\backslash
+
+\backslash
+Users
+\backslash
+
+\backslash
+amich
+\backslash
+
+\backslash
+Study
+\backslash
+
+\backslash
+rdecay02
+\backslash
+
+\backslash
+build
+\backslash
+
+\backslash
+Release
+\backslash
+
+\backslash
+rdecay02.root");
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+file->ls();
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+TH1D *hist = (TH1D*)file->Get("H16");
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+hist->Draw();
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+.x C:/Users/amich/Study/rdecay02/build/plotHisto.C
+\end_layout
+
+\begin_layout Standard
+
+\numeric on
+4
+\numeric off
+.
+ קוד:
+\end_layout
+
+\begin_layout Standard
+
+\bar under
+\color blue
+\lang english
+Run:
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+hh file: add fProcCounter3 and fParticleDataMap3, Add parameter edep3 to
+ AddEdep.
+\begin_inset Formula ${\color{green}\checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+CountProcesses: add if statement for ivol=3 
+\begin_inset Formula ${\color{green}\checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+ParticleCountL : add if statement for ivol=3 
+\begin_inset Formula ${\color{green}\checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+AddEdep: Add parameter edep3 and variables fEdepDetect21 and fEdepDetect22,
+ change fEdepDetect to fEdepDetect1 and fEdepDetect2 to fEdepDetect12 
+\color green
+
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+Merge: Add accumulate sum for the added variables.
+ 
+\begin_inset Formula ${\color{green}\checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+processes count in detector 2, 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+in created particle in detector: copy the part and change to detector 2.
+ 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+EndOfRun: change some of the prints.
+ 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\bar under
+\color blue
+\lang english
+Event Action
+\bar default
+: 
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+BeginOfEventAction: Add fEdep3 and weight3 
+\color green
+
+\begin_inset Formula ${\color{orange}{\color{green}\checkmark}}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+AddEdep: Add another if statement for ivol=3 
+\begin_inset Formula ${\color{green}\checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+EndOfEventAction: change Etot += fEdep3.
+ Add another if statement for Edep>0.
+ and fill the right histogram, Add coincidences between Detector 2.
+ 
+\begin_inset Formula ${\color{green}\checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\bar under
+\color blue
+\lang english
+SteppingAction:
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+UserSteppingAction: add another possible ivol=3.
+ 
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+Do I need to fill another ntuple other than : //fill ntuple id = 2 
+\color red
+? 
+\color inherit
+ntuple with id=2 is T3 which doesn't depend on a given detector so I haven't
+ changed the code 
+\begin_inset Formula ${\normalcolor \checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\bar under
+\color blue
+\lang english
+TrackingAction:
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+PreUserTrackingAction: Add ivol=3 possibility.
+ 
+\color green
+
+\begin_inset Formula $\checkmark$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+Do I need to change the filling of the Ntuples according to the ivol? I
+ haven't changed the code because T1 and RDecayProducts do not depend on
+ detectors.
+ 
+\begin_inset Formula ${\normalcolor \checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\bar under
+\color blue
+\lang english
+DetectorConstruction:
+\end_layout
+
+\begin_layout Standard
+
+\lang english
+Add Lead shield layer in the detectors
+\color red
+?
+\color inherit
+ maybe add after: just to keep the system closed.
+ 
+\begin_inset Formula ${\normalcolor \checkmark}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\bar under
+שאלות אחרי דף גלאי
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+ 
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\numeric on
+\strikeout default
+\xout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+1
+\end_layout
+
+\begin_layout Standard
+- מה אחוז החומרים בפחמן המרוכב?
+\end_layout
+
+\begin_layout Standard
+- האם יש אוויר בין הגרמניום לפחמן המרוכב או ואקום
+\backslash
+משהו אחר?
+\end_layout
+
+\begin_layout Standard
+- מה העובי של הצדדים של הגלאי? האם זה משנה או מה שחשוב זה רק העובי של הצד
+ שמופנה לנתרן?
+\end_layout
+
+\begin_layout Standard
+- מה הגודל של הנתרן ובאיזה צורה הוא?
+\end_layout
+
+\begin_layout Standard
+- מה המרחק בין הנתרן לגלאים?
+\end_layout
+
+\begin_layout Standard
+- האם צריך להתייחס ליעילות של הגלאי בסימולציה עצמה? להגריל מספר ורק לגלות
+ פוטונים לפי יעילות הגלאי.
+\end_layout
+
+\begin_layout Standard
+- 
+\end_layout
+
+\end_body
+\end_document

@@ -1,0 +1,38 @@
+#
+# Macro file for "rdecay02.cc"
+#
+
+/run/initialize  # Ensure this is the first command
+
+# Set verbosity levels
+/control/verbose 1
+/run/verbose 1
+/process/em/verbose 0
+# Commenting out the hadronic verbosity for testing
+# /process/had/verbose 0
+
+# Set a very high time threshold to allow all decays to happen
+/process/had/rdm/thresholdForVeryLongDecayTime 1.0e+60 year
+
+# Primary generator settings
+/gun/particle ion
+/gun/ion 11 22
+
+# Analysis settings
+/analysis/setFileName rdecay02
+#/analysis/h1/set 6 10000 0. 3. MeV
+# Activate all histograms
+#/analysis/h1/set activation true
+# Uncomment if you want to activate ntuple
+/analysis/ntuple/setActivation 1 true
+/analysis/ntuple/setActivation 2 true
+/analysis/ntuple/setActivation 3 true
+/analysis/ntuple/setActivation 4 true
+
+
+
+
+# Run settings
+/run/printProgress 100000
+#/run/beamOn 100000000
+/run/beamOn 1000000

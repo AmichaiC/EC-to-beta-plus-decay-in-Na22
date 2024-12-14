@@ -1,0 +1,67 @@
+Run Summary
+  Number of events processed : 100000000
+  User=19972.844000s Real=1911.014218s Sys=132.562000s [Cpu=1052.1%]
+
+ The run is 100000000 Na22 of 0 eV  through :
+ Target   : Length = 1 mm  Radius    = 5 mm  Material = Na22Material
+ Detector : Length = 2.14 cm  Thickness = 2.57 cm  Material = Germanium
+
+ Mean energy deposit in target,   in time window = 174.01 keV;  rms = 112.12 keV
+ Mean energy deposit in detector 1, in time window = 43.526 keV;  rms = 164.59 keV
+ Mean energy deposit in detector 2, in time window = 43.526 keV;  rms = 164.59 keV
+
+ Process calls frequency in target :
+            NoProcess=100000000       Radioactivation=199944130                  Rayl=  29801
+       Transportation=371332016               annihil=78224903                 compt=2924487
+                 conv=    662                 eBrem=2099312                 eIoni=281714312
+              ionIoni=192625004                   msc=192636606                  phot=1578681
+
+
+ Process calls frequency in detector 1:
+            NoProcess=      7       Radioactivation=      4                  Rayl= 907456
+       Transportation=31319724               annihil=1403987                 compt=15550484
+                 conv=   7773                 eBrem=1651728                 eIoni=28242227
+              ionIoni=      9                   msc=23909812                  phot=5720574
+        photonNuclear=      7
+
+ Process calls frequency in detector 2:
+            NoProcess=      9       Radioactivation=      5                  Rayl= 909575
+       Transportation=31322980               annihil=1404718                 compt=15549997
+                 conv=   7888                 eBrem=1653674                 eIoni=28243211
+              ionIoni=     14                   msc=23931373                  phot=5722562
+        photonNuclear=      9
+
+ List of generated particles in target:
+           Ne22: 100000000  Emean =  39.677 eV  ( 39.214 meV --> 126.34 eV )
+  Ne22[1274.577]: 99944130  Emean =  14.648 eV  ( 0.069122 meV --> 60.063 eV )
+             e+: 90379256  Emean =   216.5 keV  ( 9.2454 meV --> 1.8165 MeV)
+             e-: 111594575  Emean =  27.221 keV ( 4.1998 meV --> 1.4984 MeV)
+          gamma: 258544931  Emean =  802.33 keV ( 838.03 eV  --> 2.2948 MeV)
+           nu_e: 100000000  Emean =  450.72 keV ( 946.97 eV  --> 1.8219 MeV)
+
+ List of generated particles in detector 1:
+           Ge70:       3  Emean =  23.969 eV    ( 8.2966 eV  --> 34.871 eV )
+  Ge70[1039.485]:       1  Emean =  16.707 eV   ( 16.707 eV  --> 16.707 eV )
+           Ge72:       2  Emean =  4.3806 eV    ( 3.5688 eV  --> 5.1924 eV )
+  Ge72[691.430]:       1  Emean =   9.255 eV    ( 9.255 eV  --> 9.255 eV )
+  Ge72[834.011]:       1  Emean =   6.663 eV    ( 6.663 eV  --> 6.663 eV )
+           Ge73:       1  Emean =  91.852 meV   ( 91.852 meV --> 91.852 meV)
+   Ge73[13.284]:       1  Emean =  9.1532 eV    ( 9.1532 eV  --> 9.1532 eV )
+           Ge76:       1  Emean =  33.508 eV    ( 33.508 eV  --> 33.508 eV )
+             e+:    7773  Emean =  126.22 keV   ( 135.79 eV  --> 252.53 keV)
+             e-: 23811350  Emean =  178.65 keV  ( 0.30011 meV --> 1.4479 MeV)
+          gamma: 5981498  Emean =  250.51 keV   ( 990 eV  --> 1.9482 MeV)
+
+
+ List of generated particles in detector 2:
+           Ge70:       3  Emean =  23.969 eV    ( 8.2966 eV  --> 34.871 eV )
+  Ge70[1039.485]:       1  Emean =  16.707 eV   ( 16.707 eV  --> 16.707 eV )
+           Ge72:       2  Emean =  4.3806 eV    ( 3.5688 eV  --> 5.1924 eV )
+  Ge72[691.430]:       1  Emean =   9.255 eV    ( 9.255 eV  --> 9.255 eV )
+  Ge72[834.011]:       1  Emean =   6.663 eV    ( 6.663 eV  --> 6.663 eV )
+           Ge73:       1  Emean =  91.852 meV   ( 91.852 meV --> 91.852 meV)
+   Ge73[13.284]:       1  Emean =  9.1532 eV    ( 9.1532 eV  --> 9.1532 eV )
+           Ge76:       1  Emean =  33.508 eV    ( 33.508 eV  --> 33.508 eV )
+             e+:    7773  Emean =  126.22 keV   ( 135.79 eV  --> 252.53 keV)
+             e-: 23811350  Emean =  178.65 keV  ( 0.30011 meV --> 1.4479 MeV)
+          gamma: 5981498  Emean =  250.51 keV   ( 990 eV  --> 1.9482 MeV)

@@ -37,6 +37,7 @@
 #include "G4NistManager.hh"
 
 #include "G4Tubs.hh"
+#include "G4Cons.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 
@@ -122,18 +123,27 @@ void DetectorConstruction::DefineMaterials()
 
   G4Element* N  = new G4Element("Nitrogen", "N", 7, 14.01*g/mole);
   G4Element* O  = new G4Element("Oxygen",   "O", 8, 16.00*g/mole);
-  //
+  // Air
   G4int ncomponents; G4double fractionmass;      
   G4Material* Air20 = new G4Material("Air", 1.205*mg/cm3, ncomponents=2,
                       kStateGas, temperature, pressure);
     Air20->AddElement(N, fractionmass=0.7);
     Air20->AddElement(O, fractionmass=0.3);
-  //
   fWorldMater = Air20;
 
+  // Na22
   G4double density_air = 0.97 * g / cm3;
-  fTargetMater = new G4Material("Na22Material", 11, 22.0 * g / mole, density_air,kStateSolid,temperature, pressure);
+  G4double vacuum_pressure = 1.0e-9 * atmosphere;
+  fTargetMater = new G4Material("Na22Material", 11, 22.0 * g / mole, density_air,kStateSolid,temperature, vacuum_pressure);
  
+  // Tungsten
+  G4double tungsten_density = 19.25 * g / cm3;
+  G4double a_tungsten = 183.84 * g / mole;
+  G4double z_tungsten = 74;
+  G4Element* Tungsten = new G4Element("Tungsten", "W", z_tungsten, a_tungsten);
+  fTungstenMater = new G4Material("SolidTungsten", tungsten_density, 1, kStateSolid, temperature, pressure);
+  fTungstenMater->AddElement(Tungsten, 1);
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -256,7 +266,48 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
         false,                       //no boolean operation
         0);                          //copy number
 
+    // Tungsten Cones
+    G4RotationMatrix* rotation180 = new G4RotationMatrix();
+    rotation180->rotateX(180.0 * deg);
+    G4double rmax1 = fTargetRadius;                    // Outer radius at the base
+    G4double rmin1 = 0.95 * rmax1;                               // Inner radius at the base
+    G4double rmax2 = fDetectorRadius;                  // Outer radius at the top
+    G4double rmin2 = 0.95 * rmax2;                              // Inner radius at the top
+    G4double distanceFromDetToCone = 0.2 * cm; 
+    G4double distanceFromTargetToCone = fTargetLength; 
+    G4double h = 0.5 * (distanceFromTarToDet - fTargetLength - 0.5*fDetectorLength - 2*distanceFromDetToCone); 
+
+    // Cone to Detector 1
+    G4Cons* cone1 = new G4Cons("Cone1", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
+
+    G4LogicalVolume* logicCone1 = new G4LogicalVolume(cone1, fTungstenMater, "LogicCone1");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, h+distanceFromTargetToCone), logicCone1, "PhysCone1", worldLogical, false, 0);
+
+    // Cone to Detector 2
+    G4Cons* cone2 = new G4Cons("Cone2", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
+
+    G4LogicalVolume* logicCone2 = new G4LogicalVolume(cone2, fTungstenMater, "LogicCone2");
+    new G4PVPlacement(rotation180, G4ThreeVector(0, 0, -h - distanceFromTargetToCone), logicCone2, "PhysCone2", worldLogical, false, 0);
  
+
+
+    G4double TungstenDiskThickness = 0.05 * mm;
+    // disk for cone 1
+    auto tungsten_tube1
+        = new G4Tubs("TungstenTube1", 0, fTargetRadius
+            , 0.5* TungstenDiskThickness, 0., twopi);
+    auto ltungsten_tube1
+        = new G4LogicalVolume(tungsten_tube1, fTungstenMater, "lTungstenTube1");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTargetToCone+0.5*fTargetLength+0.5* TungstenDiskThickness), ltungsten_tube1, "lTungstenTube1", worldLogical, false, 0);
+
+
+    // disk for cone 2
+    auto tungsten_tube2
+        = new G4Tubs("TungstenTube2", 0, fTargetRadius
+            , 0.5 * TungstenDiskThickness, 0., twopi);
+    auto ltungsten_tube2
+        = new G4LogicalVolume(tungsten_tube2, fTungstenMater, "lTungstenTube2");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTargetToCone-0.5 * fTargetLength - 0.5* TungstenDiskThickness), ltungsten_tube2, "lTungstenTube2", worldLogical, false, 0);
 
 
  // visualization attributes ------------------------------------------------
@@ -281,6 +332,17 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
 
     lcarbon_tube2->SetVisAttributes(carbonColor);
     fVisAttributes.push_back(carbonColor);
+
+    // Cones
+    auto coneVisAttr1 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
+    logicCone1->SetVisAttributes(coneVisAttr1);
+    ltungsten_tube1->SetVisAttributes(coneVisAttr1);
+    fVisAttributes.push_back(coneVisAttr1);
+
+    auto coneVisAttr2 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
+    logicCone2->SetVisAttributes(coneVisAttr2);
+    ltungsten_tube2->SetVisAttributes(coneVisAttr2);
+    fVisAttributes.push_back(coneVisAttr2);
 
 // -------------------------------
   PrintParameters();

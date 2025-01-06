@@ -15,8 +15,8 @@
 /process/had/rdm/thresholdForVeryLongDecayTime 1.0e+60 year
 
 # Primary generator settings
-/gun/particle ion
-/gun/ion 11 22
+#/gun/particle ion
+#/gun/ion 11 22
 
 # Analysis settings
 /analysis/setFileName rdecay02

@@ -159,6 +159,7 @@ void HistoManager::Book()
   analysis->CreateNtupleDColumn("Time");      //column 4
   analysis->CreateNtupleDColumn("Weight");    //column 5
   analysis->FinishNtuple();
+
   
   analysis->SetNtupleActivation(true);          
 }

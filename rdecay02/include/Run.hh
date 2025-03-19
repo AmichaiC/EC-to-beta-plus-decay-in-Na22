@@ -54,10 +54,16 @@ class Run : public G4Run
     void CountProcesses(const G4VProcess* process, G4int iVol);
     void ParticleCount(G4String, G4double, G4int); 
     void AddEdep (G4double edep1, G4double edep2, G4double edep3);
+
+    void IncrementPositronReachingDetector1() { fPositronReachingDetector1++; }
+    void IncrementPositronReachingDetector2() { fPositronReachingDetector2++; }
+    
+    G4int GetPositronReachingDetector1() const { return fPositronReachingDetector1; }
+    G4int GetPositronReachingDetector2() const { return fPositronReachingDetector2; }
                           
     void Merge(const G4Run*) override;
     void EndOfRun();
-    void WriteActivity(G4int);     
+    void WriteActivity(G4int); 
    
   private:
     struct ParticleData {
@@ -78,13 +84,18 @@ class Run : public G4Run
     
     G4double fEdepTarget = 0., fEdepTarget2 = 0.;
     G4double fEdepDetect11 = 0., fEdepDetect12 = 0., fEdepDetect21 = 0., fEdepDetect22 = 0.;
-     
+
+    G4int fPositronReachingDetector1 = 0;
+    G4int fPositronReachingDetector2 = 0;
+
     std::map<G4String,G4int>        fProcCounter1;
     std::map<G4String,G4int>        fProcCounter2;   
     std::map<G4String, G4int>        fProcCounter3;
     std::map<G4String,ParticleData> fParticleDataMap1;                    
     std::map<G4String,ParticleData> fParticleDataMap2;
     std::map<G4String, ParticleData> fParticleDataMap3;
+
+    std::map<G4String, std::map<G4String, G4int>> fProcCounterByVolume;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

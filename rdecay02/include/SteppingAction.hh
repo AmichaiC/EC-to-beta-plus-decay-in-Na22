@@ -51,7 +51,7 @@ class SteppingAction : public G4UserSteppingAction
     
   private:
     DetectorConstruction* fDetector = nullptr;  
-    EventAction* fEventAction = nullptr;    
+    EventAction* fEventAction = nullptr;   
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

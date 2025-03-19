@@ -61,12 +61,14 @@ DetectorConstruction::DetectorConstruction() : fVisAttributes()
 {
   fTargetLength      = 0.1*cm; 
   fTargetRadius      = 0.5*cm;
+  fTargetRadiusActive = 2 * mm;
   fDetectorLength    = 2.14*cm; 
   fDetectorRadius = 2.57*cm;
   fWorldLength = 0.3 * m;
   fSideAirThickness = 1. * mm;
   fDistanceFromGeToWindow1 = 5.22 * mm;
   fWindowThickness = 0.6 * mm;
+  fdistanceFromTarToDet = 5. * cm;
   DefineMaterials();
     
   fDetectorMessenger = new DetectorMessenger(this);
@@ -144,6 +146,14 @@ void DetectorConstruction::DefineMaterials()
   fTungstenMater = new G4Material("SolidTungsten", tungsten_density, 1, kStateSolid, temperature, pressure);
   fTungstenMater->AddElement(Tungsten, 1);
 
+  //Kapton 
+  G4double kaptonDensity = 1.42 * g / cm3;
+  fKaptonMater = new G4Material("Kapton", kaptonDensity, 3);
+  fKaptonMater->AddElement(nistManager->FindOrBuildElement("C"), 5);
+  fKaptonMater->AddElement(nistManager->FindOrBuildElement("H"), 10);
+  fKaptonMater->AddElement(nistManager->FindOrBuildElement("O"), 5);
+
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -157,51 +167,87 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
   G4SolidStore::GetInstance()->Clean();
   
   // World
-  auto worldSolid
-      = new G4Box("worldBox",             // name
-          fWorldLength, fWorldLength, fWorldLength);   // dimentions
-  auto worldLogical
-      = new G4LogicalVolume(worldSolid, //shape
-          fWorldMater,    //material
-          "worldLogical");    // name
-  fPhysiWorld
-      = new G4PVPlacement(0,  // no rotation
-          G4ThreeVector(),    // at (0,0,0)
-          worldLogical,       //logical volume
-          "worldPhysical",    //name
-          0,                  //mother volume
-          false,              //no boolean operation
-          0);
-                            
+  BuildWorld();
   // Target
-  //
-  G4Tubs* 
-  sTarget = new G4Tubs("Target",                                   //name
-                  0., fTargetRadius, 0.5*fTargetLength, 0.,twopi); //dimensions
+  BuildSource();
+  
+  // Detectors
+  BuildDetector1();
+  BuildDetector2();
+
+  // Tungsten Cones
+  BuildTungstenCones();
+
+  // Kapton Disks
+  BuildKaptonDisks();
+
+// -------------------------------
+  PrintParameters();
+  
+  return fPhysiWorld;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void DetectorConstruction::BuildWorld() {
+    auto worldSolid
+        = new G4Box("worldBox",             // name
+            fWorldLength, fWorldLength, fWorldLength);   // dimentions
+    fworldLogical
+        = new G4LogicalVolume(worldSolid, //shape
+            fWorldMater,    //material
+            "fworldLogical");    // name
+    fPhysiWorld
+        = new G4PVPlacement(0,  // no rotation
+            G4ThreeVector(),    // at (0,0,0)
+            fworldLogical,       //logical volume
+            "worldPhysical",    //name
+            0,                  //mother volume
+            false,              //no boolean operation
+            0);
+
+    G4double transparency = 0.5;
+
+    auto worldvisAttributes = new G4VisAttributes(G4Colour(1.0, 1.0, 1.0, transparency));
+    worldvisAttributes->SetVisibility(true);
+    fworldLogical->SetVisAttributes(worldvisAttributes);
+    fVisAttributes.push_back(worldvisAttributes);
+
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void DetectorConstruction::BuildSource() {
+    G4Tubs*
+        sTarget = new G4Tubs("Target",                                   //name
+            0., fTargetRadiusActive, 0.5 * fTargetLength, 0., twopi); //dimensions
 
 
-  fLogicTarget = new G4LogicalVolume(sTarget,           //shape
-                             fTargetMater,              //material
-                             "Target");                 //name
-                               
-           new G4PVPlacement(0,                         //no rotation
-                           G4ThreeVector(),             //at (0,0,0)
-                           fLogicTarget,                //logical volume
-                           "Target",                    //name
-                            worldLogical,                      //mother  volume
-                           false,                       //no boolean operation
-                           0);                          //copy number
-    // Detector 1
-    G4double distanceFromTarToDet = 5. * cm;
+    fLogicTarget = new G4LogicalVolume(sTarget,           //shape
+        fTargetMater,              //material
+        "Target");                 //name
+
+    new G4PVPlacement(0,                         //no rotation
+        G4ThreeVector(),             //at (0,0,0)
+        fLogicTarget,                //logical volume
+        "Target",                    //name
+        fworldLogical,                      //mother  volume
+        false,                       //no boolean operation
+        0);                          //copy number
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void DetectorConstruction::BuildDetector1() {
     auto carbon_tube1
-        = new G4Tubs("CarbonTube1", fDetectorRadius+ fSideAirThickness,
+        = new G4Tubs("CarbonTube1", fDetectorRadius + fSideAirThickness,
             fDetectorRadius + fSideAirThickness + fWindowThickness
-            , 0.5*(fDetectorLength+fWindowThickness+fDistanceFromGeToWindow1)
+            , 0.5 * (fDetectorLength + fWindowThickness + fDistanceFromGeToWindow1)
             , 0., twopi);
 
     auto lcarbon_tube1
         = new G4LogicalVolume(carbon_tube1, carbon, "lCarbonTube1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTarToDet), lcarbon_tube1, "lCarbonTube1", worldLogical, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(0, 0, fdistanceFromTarToDet), lcarbon_tube1, "lCarbonTube1", fworldLogical, false, 0);
 
     auto air_tube1
         = new G4Tubs("AirTube1", fDetectorRadius,
@@ -211,44 +257,60 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
 
     auto lair_tube1
         = new G4LogicalVolume(air_tube1, fWorldMater, "lairTube1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTarToDet), lair_tube1, "lairTube1", worldLogical, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(0, 0, fdistanceFromTarToDet), lair_tube1, "lairTube1", fworldLogical, false, 0);
 
-  G4Tubs* sDetector1 = new G4Tubs("Detector1",  
-      0., fDetectorRadius, 0.5*fDetectorLength, 0.,twopi);
+    G4Tubs* sDetector1 = new G4Tubs("Detector1",
+        0., fDetectorRadius, 0.5 * fDetectorLength, 0., twopi);
 
 
-  fLogicDetector1 = new G4LogicalVolume(sDetector1,       //shape
-                             fDetectorMater,            //material
-                             "Detector1");               //name
-                               
-           new G4PVPlacement(0,                         //no rotation
-                           G4ThreeVector(0,0,distanceFromTarToDet),     // location    
-                           fLogicDetector1,              //logical volume
-                           "Detector1",                  //name
-                           worldLogical,                      //mother  volume
-                           false,                       //no boolean operation
-                           0);                          //copy number
+    fLogicDetector1 = new G4LogicalVolume(sDetector1,       //shape
+        fDetectorMater,            //material
+        "Detector1");               //name
 
-    // Detector 2
-           auto carbon_tube2
-               = new G4Tubs("CarbonTube2", fDetectorRadius + fSideAirThickness,
-                   fDetectorRadius + fSideAirThickness + fWindowThickness
-                   , 0.5 * (fDetectorLength + fWindowThickness + fDistanceFromGeToWindow1)
-                   , 0., twopi);
+    new G4PVPlacement(0,                         //no rotation
+        G4ThreeVector(0, 0, fdistanceFromTarToDet),     // location    
+        fLogicDetector1,              //logical volume
+        "Detector1",                  //name
+        fworldLogical,                      //mother  volume
+        false,                       //no boolean operation
+        0);                          //copy number
 
-           auto lcarbon_tube2
-               = new G4LogicalVolume(carbon_tube1, carbon, "lCarbonTube2");
-           new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTarToDet), lcarbon_tube2, "lCarbonTube2", worldLogical, false, 0);
+    // visAttributes
+    G4double transparency = 0.5;
+    auto det1visAttributes = new G4VisAttributes(G4Colour(0.8888, 0.0, 0.0, transparency));
+    fLogicDetector1->SetVisAttributes(det1visAttributes);
+    fVisAttributes.push_back(det1visAttributes);
 
-           auto air_tube2
-               = new G4Tubs("AirTube2", fDetectorRadius,
-                   fDetectorRadius + fSideAirThickness
-                   , 0.5 * (fDetectorLength + fDistanceFromGeToWindow1)
-                   , 0., twopi);
 
-           auto lair_tube2
-               = new G4LogicalVolume(air_tube2, fWorldMater, "lairTube2");
-           new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTarToDet), lair_tube2, "lairTube2", worldLogical, false, 0);
+
+    auto carbonColor = new G4VisAttributes(G4Colour(0.8, 0.8, 0.8, transparency)); // silver
+    lcarbon_tube1->SetVisAttributes(carbonColor);
+    fVisAttributes.push_back(carbonColor);
+
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void DetectorConstruction::BuildDetector2() {
+    auto carbon_tube2
+        = new G4Tubs("CarbonTube2", fDetectorRadius + fSideAirThickness,
+            fDetectorRadius + fSideAirThickness + fWindowThickness
+            , 0.5 * (fDetectorLength + fWindowThickness + fDistanceFromGeToWindow1)
+            , 0., twopi);
+
+    auto lcarbon_tube2
+        = new G4LogicalVolume(carbon_tube2, carbon, "lCarbonTube2");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, -fdistanceFromTarToDet), lcarbon_tube2, "lCarbonTube2", fworldLogical, false, 0);
+
+    auto air_tube2
+        = new G4Tubs("AirTube2", fDetectorRadius,
+            fDetectorRadius + fSideAirThickness
+            , 0.5 * (fDetectorLength + fDistanceFromGeToWindow1)
+            , 0., twopi);
+
+    auto lair_tube2
+        = new G4LogicalVolume(air_tube2, fWorldMater, "lairTube2");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, -fdistanceFromTarToDet), lair_tube2, "lairTube2", fworldLogical, false, 0);
 
     G4Tubs* sDetector2 = new G4Tubs("Detector2",
         0., fDetectorRadius, 0.5 * fDetectorLength, 0., twopi);
@@ -259,98 +321,113 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
         "Detector2");               //name
 
     new G4PVPlacement(0,                         //no rotation
-        G4ThreeVector(0, 0, -distanceFromTarToDet),     // location    
+        G4ThreeVector(0, 0, -fdistanceFromTarToDet),     // location    
         fLogicDetector2,              //logical volume
         "Detector2",                  //name
-        worldLogical,                      //mother  volume
+        fworldLogical,                      //mother  volume
         false,                       //no boolean operation
         0);                          //copy number
 
-    // Tungsten Cones
-    G4RotationMatrix* rotation180 = new G4RotationMatrix();
-    rotation180->rotateX(180.0 * deg);
-    G4double rmax1 = fTargetRadius;                    // Outer radius at the base
-    G4double rmin1 = 0.95 * rmax1;                               // Inner radius at the base
-    G4double rmax2 = fDetectorRadius;                  // Outer radius at the top
-    G4double rmin2 = 0.95 * rmax2;                              // Inner radius at the top
-    G4double distanceFromDetToCone = 0.2 * cm; 
-    G4double distanceFromTargetToCone = fTargetLength; 
-    G4double h = 0.5 * (distanceFromTarToDet - fTargetLength - 0.5*fDetectorLength - 2*distanceFromDetToCone); 
 
-    // Cone to Detector 1
-    G4Cons* cone1 = new G4Cons("Cone1", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
-
-    G4LogicalVolume* logicCone1 = new G4LogicalVolume(cone1, fTungstenMater, "LogicCone1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, h+distanceFromTargetToCone), logicCone1, "PhysCone1", worldLogical, false, 0);
-
-    // Cone to Detector 2
-    G4Cons* cone2 = new G4Cons("Cone2", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
-
-    G4LogicalVolume* logicCone2 = new G4LogicalVolume(cone2, fTungstenMater, "LogicCone2");
-    new G4PVPlacement(rotation180, G4ThreeVector(0, 0, -h - distanceFromTargetToCone), logicCone2, "PhysCone2", worldLogical, false, 0);
- 
-
-
-    G4double TungstenDiskThickness = 0.05 * mm;
-    // disk for cone 1
-    auto tungsten_tube1
-        = new G4Tubs("TungstenTube1", 0, fTargetRadius
-            , 0.5* TungstenDiskThickness, 0., twopi);
-    auto ltungsten_tube1
-        = new G4LogicalVolume(tungsten_tube1, fTungstenMater, "lTungstenTube1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTargetToCone+0.5*fTargetLength+0.5* TungstenDiskThickness), ltungsten_tube1, "lTungstenTube1", worldLogical, false, 0);
-
-
-    // disk for cone 2
-    auto tungsten_tube2
-        = new G4Tubs("TungstenTube2", 0, fTargetRadius
-            , 0.5 * TungstenDiskThickness, 0., twopi);
-    auto ltungsten_tube2
-        = new G4LogicalVolume(tungsten_tube2, fTungstenMater, "lTungstenTube2");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTargetToCone-0.5 * fTargetLength - 0.5* TungstenDiskThickness), ltungsten_tube2, "lTungstenTube2", worldLogical, false, 0);
-
-
- // visualization attributes ------------------------------------------------
-           G4double transparency = 0.5;
-
-    auto worldvisAttributes = new G4VisAttributes(G4Colour(1.0, 1.0, 1.0, transparency));
-    worldvisAttributes->SetVisibility(true);
-    worldLogical->SetVisAttributes(worldvisAttributes);
-    fVisAttributes.push_back(worldvisAttributes);
-
-    auto det1visAttributes = new G4VisAttributes(G4Colour(0.8888, 0.0, 0.0, transparency));
-    fLogicDetector1->SetVisAttributes(det1visAttributes);
-    fVisAttributes.push_back(det1visAttributes);
+// VisAttributes
+    G4double transparency = 0.5;
 
     auto det2visAttributes = new G4VisAttributes(G4Colour(0.8888, 0.0, 0.0, transparency));
     fLogicDetector2->SetVisAttributes(det2visAttributes);
     fVisAttributes.push_back(det2visAttributes);
 
     auto carbonColor = new G4VisAttributes(G4Colour(0.8, 0.8, 0.8, transparency)); // silver
-    lcarbon_tube1->SetVisAttributes(carbonColor);
-    fVisAttributes.push_back(carbonColor);
-
     lcarbon_tube2->SetVisAttributes(carbonColor);
     fVisAttributes.push_back(carbonColor);
+}
 
-    // Cones
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void DetectorConstruction::BuildTungstenCones() {
+    G4RotationMatrix* rotation180 = new G4RotationMatrix();
+    rotation180->rotateX(180.0 * deg);
+    G4double rmax1 = fTargetRadius;                    // Outer radius at the base
+    G4double rmin1 = 0.95 * rmax1;                               // Inner radius at the base
+    G4double rmax2 = fDetectorRadius;                  // Outer radius at the top
+    G4double rmin2 = 0.95 * rmax2;                              // Inner radius at the top
+    G4double distanceFromDetToCone = 0.2 * cm;
+    G4double distanceFromTargetToCone = fTargetLength;
+    G4double h = 0.5 * (fdistanceFromTarToDet - fTargetLength - 0.5 * fDetectorLength - 2 * distanceFromDetToCone);
+
+    // Cone to Detector 1
+    G4Cons* cone1 = new G4Cons("Cone1", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
+
+    G4LogicalVolume* logicCone1 = new G4LogicalVolume(cone1, fTungstenMater, "LogicCone1");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, h + distanceFromTargetToCone), logicCone1, "PhysCone1", fworldLogical, false, 0);
+
+    // Cone to Detector 2
+    G4Cons* cone2 = new G4Cons("Cone2", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
+
+    G4LogicalVolume* logicCone2 = new G4LogicalVolume(cone2, fTungstenMater, "LogicCone2");
+    new G4PVPlacement(rotation180, G4ThreeVector(0, 0, -h - distanceFromTargetToCone), logicCone2, "PhysCone2", fworldLogical, false, 0);
+
+
+    // TODO - CHANGE HERE
+    G4double TungstenDiskThickness = 0.05 * mm;
+    // disk for cone 1
+    auto tungsten_tube1
+        = new G4Tubs("TungstenTube1", 0, fTargetRadius
+            , 0.5 * TungstenDiskThickness, 0., twopi);
+    fLogicTungstenTube1
+        = new G4LogicalVolume(tungsten_tube1, fTungstenMater, "lTungstenTube1");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTargetToCone + 0.5 * fTargetLength + 0.5 * TungstenDiskThickness), fLogicTungstenTube1, "lTungstenTube1", fworldLogical, false, 0);
+
+
+    // disk for cone 2
+    auto tungsten_tube2
+        = new G4Tubs("TungstenTube2", 0, fTargetRadius
+            , 0.5 * TungstenDiskThickness, 0., twopi);
+    fLogicTungstenTube2
+        = new G4LogicalVolume(tungsten_tube2, fTungstenMater, "lTungstenTube2");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTargetToCone - 0.5 * fTargetLength - 0.5 * TungstenDiskThickness), fLogicTungstenTube2, "lTungstenTube2", fworldLogical, false, 0);
+
+    // VisAttributes for Cones
+    G4double transparency = 0.5;
     auto coneVisAttr1 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
     logicCone1->SetVisAttributes(coneVisAttr1);
-    ltungsten_tube1->SetVisAttributes(coneVisAttr1);
+    fLogicTungstenTube1->SetVisAttributes(coneVisAttr1);
     fVisAttributes.push_back(coneVisAttr1);
 
     auto coneVisAttr2 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
     logicCone2->SetVisAttributes(coneVisAttr2);
-    ltungsten_tube2->SetVisAttributes(coneVisAttr2);
+    fLogicTungstenTube2->SetVisAttributes(coneVisAttr2);
     fVisAttributes.push_back(coneVisAttr2);
-
-// -------------------------------
-  PrintParameters();
-  
-  //always return the root volume
-  //
-  return fPhysiWorld;
 }
+
+void DetectorConstruction::BuildKaptonDisks() {
+    G4double distanceFromTargetToDisk = 0.75*fTargetLength;
+    G4double KaptonDiskThickness = 0.005 * cm;
+
+    //Kapton Tube 1
+    auto Kapton_tube1
+        = new G4Tubs("KaptonTube1", 0, fTargetRadius
+            , 0.5 * KaptonDiskThickness, 0., twopi);
+    fLogicKapton_tube1
+        = new G4LogicalVolume(Kapton_tube1, fKaptonMater, "lKapton_tube1");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTargetToDisk), fLogicKapton_tube1, "lKapton_tube1", fworldLogical, false, 0);
+
+    //Kapton Tube 2
+    auto Kapton_tube2
+        = new G4Tubs("KaptonTube2", 0, fTargetRadius
+            , 0.5 * KaptonDiskThickness, 0., twopi);
+    fLogicKapton_tube2
+        = new G4LogicalVolume(Kapton_tube2, fKaptonMater, "lKapton_tube2");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTargetToDisk), fLogicKapton_tube2, "lKapton_tube2", fworldLogical, false, 0);
+
+
+    // VisAttributes for Disks
+    G4double transparency = 0.5;
+    auto KaptonDiskVisAttr1 = new G4VisAttributes(G4Colour(1.0, 0.5, 0.0, transparency)); // orange
+    fLogicKapton_tube1->SetVisAttributes(KaptonDiskVisAttr1);
+    fLogicKapton_tube2->SetVisAttributes(KaptonDiskVisAttr1);
+    fVisAttributes.push_back(KaptonDiskVisAttr1);
+}
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -493,6 +570,16 @@ G4LogicalVolume* DetectorConstruction::GetLogicDetector1()
 G4LogicalVolume* DetectorConstruction::GetLogicDetector2()
 {
     return fLogicDetector2;
+}
+
+G4LogicalVolume* DetectorConstruction::GetLogicDisk1()
+{
+    return fLogicTungstenTube1;
+}
+
+G4LogicalVolume* DetectorConstruction::GetLogicDisk2()
+{
+    return fLogicTungstenTube2;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -56,13 +56,13 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
         G4RunManager::GetRunManager()->GetNonConstCurrentRun());    
   
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
-
+  
   //
   G4LogicalVolume* lVolume = track->GetVolume()->GetLogicalVolume();
   G4int iVol = 0;
   if (lVolume == fDetector->GetLogicTarget())   iVol = 1;
-  if (lVolume == fDetector->GetLogicDetector1()) iVol = 2;
-  if (lVolume == fDetector->GetLogicDetector2()) iVol = 3;
+  else if (lVolume == fDetector->GetLogicDetector1()) iVol = 2;
+  else if (lVolume == fDetector->GetLogicDetector2()) iVol = 3;
     
   //secondary particles only
   if (track->GetTrackID() == 1) return;
@@ -109,6 +109,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
   }
   
   //all unstable ions produced in target
+  // Record unstable ions in the target
   G4bool unstableIon = ((charge > 2.) && !(particle->GetPDGStable()));
   if ((unstableIon) && (iVol == 1)) {
     //fill ntuple id = 1
@@ -119,6 +120,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
     analysisManager->AddNtupleRow(id);  
   }
 }
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

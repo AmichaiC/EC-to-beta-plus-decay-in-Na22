@@ -303,6 +303,7 @@ void Run::Merge(const G4Run* run)
   G4Run::Merge(run); 
 } 
 
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void Run::EndOfRun() 
@@ -464,6 +465,14 @@ void Run::EndOfRun()
           << " --> " << G4BestUnit(eMax, "Energy") << ")" << G4endl;
   }
   G4cout << G4endl;
+
+  G4cout << "\n=========================================" << G4endl;
+  G4cout << " Positron Statistics: " << G4endl;
+  G4cout << "-----------------------------------------" << G4endl;
+  G4cout << " Positrons Reaching Detector 1 from target: " << fPositronReachingDetector1 << G4endl;
+  G4cout << " Positrons Reaching Detector 2 from target: " << fPositronReachingDetector2 << G4endl;
+  G4cout << "=========================================" << G4endl;
+
  
   // activities in VR mode
   //

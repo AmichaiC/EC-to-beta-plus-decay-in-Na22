@@ -51,15 +51,18 @@ class Run : public G4Run
 
   public:
     void SetPrimary(G4ParticleDefinition* particle, G4double energy);         
-    void CountProcesses(const G4VProcess* process, G4int iVol);
+    void CountProcesses(const G4VProcess* process, const G4String& volumeName);
     void ParticleCount(G4String, G4double, G4int); 
     void AddEdep (G4double edep1, G4double edep2, G4double edep3);
+    void Run::PrintProcessFrequency();
 
     void IncrementPositronReachingDetector1() { fPositronReachingDetector1++; }
     void IncrementPositronReachingDetector2() { fPositronReachingDetector2++; }
-    
     G4int GetPositronReachingDetector1() const { return fPositronReachingDetector1; }
     G4int GetPositronReachingDetector2() const { return fPositronReachingDetector2; }
+    void IncrementUniqueAnnihilationCount() { fUniqueAnnihilationCount++; }
+    G4int GetUniqueAnnihilationCount() const { return fUniqueAnnihilationCount; }
+    void IncrementAnnihilationByVolumeFromSource(G4String);
                           
     void Merge(const G4Run*) override;
     void EndOfRun();
@@ -87,6 +90,7 @@ class Run : public G4Run
 
     G4int fPositronReachingDetector1 = 0;
     G4int fPositronReachingDetector2 = 0;
+    G4int fUniqueAnnihilationCount = 0;
 
     std::map<G4String,G4int>        fProcCounter1;
     std::map<G4String,G4int>        fProcCounter2;   
@@ -96,6 +100,9 @@ class Run : public G4Run
     std::map<G4String, ParticleData> fParticleDataMap3;
 
     std::map<G4String, std::map<G4String, G4int>> fProcCounterByVolume;
+
+    // maps the number of annihilations in each volume by the positrons emitted by the source
+    std::map<G4String, G4int> fAnnihilationByVolumeFromSource; 
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

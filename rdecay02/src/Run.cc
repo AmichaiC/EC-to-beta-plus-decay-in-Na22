@@ -38,6 +38,7 @@
 #include "G4TwoVector.hh"
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
+#include "MyTrackInfo.hh"
 
 #include <fstream>
 
@@ -57,39 +58,20 @@ void Run::SetPrimary(G4ParticleDefinition* particle, G4double energy)
  
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void Run::CountProcesses(const G4VProcess* process, G4int iVol) 
+void Run::CountProcesses(const G4VProcess* process, const G4String& volumeName)
 {
-  if (process == nullptr) return;  
-  G4String procName = process->GetProcessName();
-  if (iVol == 1) {
-    std::map<G4String,G4int>::iterator it1 = fProcCounter1.find(procName);
-    if ( it1 == fProcCounter1.end()) {
-      fProcCounter1[procName] = 1;
-    }
-    else {
-      fProcCounter1[procName]++; 
-    }
-  }
-    
-  if (iVol == 2) {
-    std::map<G4String,G4int>::iterator it2 = fProcCounter2.find(procName);
-    if ( it2 == fProcCounter2.end()) {
-      fProcCounter2[procName] = 1;
-    }
-    else {
-      fProcCounter2[procName]++; 
-    }    
-  }
+  if (!process) return;
+    G4String procName = process->GetProcessName();
+    // Update the nested map: if volumeName not present, it will be default-constructed.
+    fProcCounterByVolume[volumeName][procName]++;
+}
 
-  if (iVol == 3) {
-      std::map<G4String, G4int>::iterator it2 = fProcCounter3.find(procName);
-      if (it2 == fProcCounter3.end()) {
-          fProcCounter3[procName] = 1;
-      }
-      else {
-          fProcCounter3[procName]++;
-      }
-  }
+
+void Run::IncrementAnnihilationByVolumeFromSource(G4String volumeName)
+{
+    // Increment the count of annihilations for positrons
+    // created in the target, in the given volume.
+    fAnnihilationByVolumeFromSource[volumeName]++;
 }
                   
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -298,10 +280,41 @@ void Run::Merge(const G4Run* run)
           G4double emax = localData.fEmax;
           if (emax > data.fEmax) data.fEmax = emax;
       }
+
+      // Merge fProcCounterByVolume 
+      for (const auto& volPair : localRun->fProcCounterByVolume) {
+          const G4String& volumeName = volPair.first;
+          const std::map<G4String, G4int>& localProcMap = volPair.second;
+          for (const auto& procPair : localProcMap) {
+              const G4String& procName = procPair.first;
+              G4int localCount = procPair.second;
+              // Add the count to the corresponding entry in our master map.
+              fProcCounterByVolume[volumeName][procName] += localCount;
+          }
+      }
+  }
+
+  // Merge annihilation counts from each thread
+  for (const auto& kv : localRun->fAnnihilationByVolumeFromSource) {
+      fAnnihilationByVolumeFromSource[kv.first] += kv.second;
   }
 
   G4Run::Merge(run); 
 } 
+
+void Run::PrintProcessFrequency()
+{
+    G4cout << "\n Process calls frequency by volume:" << G4endl;
+    for (const auto& volPair : fProcCounterByVolume) {
+        G4String volName = volPair.first;
+        G4cout << "\n Volume: " << volName << G4endl;
+        for (const auto& procPair : volPair.second) {
+            G4String procName = procPair.first;
+            G4int count = procPair.second;
+            G4cout << "   " << procName << " = " << count << G4endl;
+        }
+    }
+}
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -406,6 +419,9 @@ void Run::EndOfRun()
           << space;
   }
   G4cout << G4endl;
+
+  // TODO - NEW PRINTING OF FREQUENCY MIGHT NEED TO DELETE THE ONES BEFORE
+  PrintProcessFrequency();
     
   // particles count in target
   //
@@ -472,6 +488,15 @@ void Run::EndOfRun()
   G4cout << " Positrons Reaching Detector 1 from target: " << fPositronReachingDetector1 << G4endl;
   G4cout << " Positrons Reaching Detector 2 from target: " << fPositronReachingDetector2 << G4endl;
   G4cout << "=========================================" << G4endl;
+
+  // --- Print annihilations by volume ---
+  G4cout << "\n Annihilations of target-born e+ by volume:" << G4endl;
+  for (const auto& kv : fAnnihilationByVolumeFromSource) {
+      G4cout << "  Volume: "
+          << std::setw(12) << kv.first
+          << " -> " << kv.second << " annihilations"
+          << G4endl;
+  }
 
  
   // activities in VR mode

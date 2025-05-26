@@ -39,8 +39,10 @@
 #include "G4RunManager.hh"
 #include "G4Track.hh"
 #include "G4HadronicProcessType.hh"
-
 #include "G4SystemOfUnits.hh"
+
+#include "MyTrackInfo.hh"
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -52,6 +54,17 @@ TrackingAction::TrackingAction(DetectorConstruction* det)
 
 void TrackingAction::PreUserTrackingAction(const G4Track* track)
 {
+
+  // Ensure each track carries its birth volume in the user info
+  MyTrackInfo* trackInfo = dynamic_cast<MyTrackInfo*>(track->GetUserInformation());
+  if (!trackInfo) {
+      trackInfo = new MyTrackInfo();
+      const_cast<G4Track*>(track)->SetUserInformation(trackInfo);
+  }
+  // Record the logical volume where the track was created
+  G4LogicalVolume* birthVolume = track->GetTouchableHandle()->GetVolume(0)->GetLogicalVolume();
+  trackInfo->SetBirthVolume(birthVolume);
+
   Run* run = static_cast<Run*>(
         G4RunManager::GetRunManager()->GetNonConstCurrentRun());    
   

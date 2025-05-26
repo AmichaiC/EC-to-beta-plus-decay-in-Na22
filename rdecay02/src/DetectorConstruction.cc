@@ -68,7 +68,8 @@ DetectorConstruction::DetectorConstruction() : fVisAttributes()
   fSideAirThickness = 1. * mm;
   fDistanceFromGeToWindow1 = 5.22 * mm;
   fWindowThickness = 0.6 * mm;
-  fdistanceFromTarToDet = 5. * cm;
+  // TODO - checkk for 5, 15 and 25 cm
+  fdistanceFromTarToDet = 15. * cm;
   DefineMaterials();
     
   fDetectorMessenger = new DetectorMessenger(this);
@@ -367,7 +368,7 @@ void DetectorConstruction::BuildTungstenCones() {
     new G4PVPlacement(rotation180, G4ThreeVector(0, 0, -h - distanceFromTargetToCone), logicCone2, "PhysCone2", fworldLogical, false, 0);
 
 
-    // TODO - CHANGE HERE
+    // TODO - CHANGE HERE - do 0.25 mm, 0.05
     G4double TungstenDiskThickness = 0.05 * mm;
     // disk for cone 1
     auto tungsten_tube1
@@ -400,8 +401,8 @@ void DetectorConstruction::BuildTungstenCones() {
 }
 
 void DetectorConstruction::BuildKaptonDisks() {
-    G4double distanceFromTargetToDisk = 0.75*fTargetLength;
-    G4double KaptonDiskThickness = 0.005 * cm;
+    G4double distanceFromTargetToDisk = 0.75 * fTargetLength;
+    G4double KaptonDiskThickness = 0.005 * mm;
 
     //Kapton Tube 1
     auto Kapton_tube1

@@ -55,9 +55,9 @@ void HistoManager::Book()
     
   // Default values (to be reset via /analysis/h1/set command)               
   //G4int nbins = 10000;
-  G4int nbins = 10000;
+  G4int nbins = 3000;
   G4double vmin = 0.;
-  G4double vmax = 100.;
+  G4double vmax = 3.;
 
   // Create all histograms as inactivated 
   // as we have not yet set nbins, vmin, vmax

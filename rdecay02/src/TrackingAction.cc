@@ -46,9 +46,12 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-TrackingAction::TrackingAction(DetectorConstruction* det)
-:fDetector(det)
-{ }
+TrackingAction::TrackingAction()
+{
+    fDetector = const_cast<DetectorConstruction*>(
+        static_cast<const DetectorConstruction*>(
+            G4RunManager::GetRunManager()->GetUserDetectorConstruction()));
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -76,9 +79,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
   if (lVolume == fDetector->GetLogicTarget())   iVol = 1;
   else if (lVolume == fDetector->GetLogicDetector1()) iVol = 2;
   else if (lVolume == fDetector->GetLogicDetector2()) iVol = 3;
-    
-  //secondary particles only
-  if (track->GetTrackID() == 1) return;
+
   
   const G4ParticleDefinition* particle = track->GetParticleDefinition();  
   G4String name   = particle->GetParticleName();
@@ -94,6 +95,11 @@ void TrackingAction::PreUserTrackingAction(const G4Track* track)
   
   //Radioactive decay products
   G4int processType = track->GetCreatorProcess()->GetProcessSubType();
+
+
+  //secondary particles only
+  if (track->GetTrackID() == 1) return;
+
   if (processType == fRadioactiveDecay) {
     //fill ntuple id = 3
     G4int id = 3;

@@ -50,6 +50,8 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
   fParticleGun->SetParticleEnergy(0*eV);
   fParticleGun->SetParticlePosition(G4ThreeVector(0.*cm,0.*cm,0.*cm));
   fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,0.));
+
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -63,19 +65,42 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
-  if (fParticleGun->GetParticleDefinition() == G4Geantino::Geantino()) {  
-    G4int Z = 11, A = 22;
-    G4double ionCharge   = 0.*eplus;
-    G4double excitEnergy = 0.*keV;
-    
-    G4ParticleDefinition* ion
-       = G4IonTable::GetIonTable()->GetIon(Z,A,excitEnergy);
-    fParticleGun->SetParticleDefinition(ion);
-    fParticleGun->SetParticleCharge(ionCharge);
-  }    
-  //create vertex
-  //   
-  fParticleGun->GeneratePrimaryVertex(anEvent);
+    // Part for Calibration of 511 and 1274 keV photons
+    auto gamma = G4ParticleTable::GetParticleTable()->FindParticle("gamma");
+    fParticleGun->SetParticleDefinition(gamma);
+    fParticleGun->SetParticleEnergy(1274 * keV);
+    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.));
+    G4double cosTheta = 2.0 * G4UniformRand() - 1.0; 
+    G4double sinTheta = std::sqrt(1.0 - cosTheta * cosTheta);
+    G4double phi = 2.0 * CLHEP::pi * G4UniformRand();
+    G4ThreeVector direction(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
+    fParticleGun->SetParticleMomentumDirection(direction);
+    fParticleGun->GeneratePrimaryVertex(anEvent);
+
+    //simulation of one e+
+
+    //fParticleGun->SetParticleDefinition(G4ParticleTable::GetParticleTable()->FindParticle("e+"));
+    //fParticleGun->SetParticleEnergy(1. * MeV);  // Slow positron
+    //fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.));  // Optional
+    //fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));  // Optional
+    //fParticleGun->GeneratePrimaryVertex(anEvent);
+
+
+    // Part for Na-22 decay
+
+  //if (fParticleGun->GetParticleDefinition() == G4Geantino::Geantino()) {  
+  //  G4int Z = 11, A = 22;
+  //  G4double ionCharge   = 0.*eplus;
+  //  G4double excitEnergy = 0.*keV;
+  //  
+  //  G4ParticleDefinition* ion
+  //     = G4IonTable::GetIonTable()->GetIon(Z,A,excitEnergy);
+  //  fParticleGun->SetParticleDefinition(ion);
+  //  fParticleGun->SetParticleCharge(ionCharge);
+  //}    
+  ////create vertex
+  ////   
+  //fParticleGun->GeneratePrimaryVertex(anEvent);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

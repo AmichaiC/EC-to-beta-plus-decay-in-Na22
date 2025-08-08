@@ -26,7 +26,6 @@
 
 #include "SteppingAction.hh"
 #include "DetectorConstruction.hh"
-#include "Run.hh"
 #include "EventAction.hh"
 #include "HistoManager.hh"
 #include "MyTrackInfo.hh"
@@ -37,10 +36,13 @@
 #include "G4Positron.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-SteppingAction::SteppingAction(DetectorConstruction* det, EventAction* event)
-    : fDetector(det)
-    , fEventAction(event)
-{ }
+SteppingAction::SteppingAction(EventAction* event)
+    :fEventAction(event)
+{
+    fDetector = const_cast<DetectorConstruction*>(
+        static_cast<const DetectorConstruction*>(
+            G4RunManager::GetRunManager()->GetUserDetectorConstruction()));
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void SteppingAction::UserSteppingAction(const G4Step* aStep)
@@ -103,6 +105,78 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
             trackInfo->SetAnnihilationCounted(true);
         }
     }
+
+    // code for if 1274 keV photon is absorbs in the disks or getting through - doesn't work, program collapse
+
+    // only 1274 keV gammas
+    //if (name == "gamma") {
+    //    /*HandleGammaStep(aStep, run, preStepVolume, postStepVolume, birthVolume);*/
+    //    G4double E = track->GetKineticEnergy();
+
+    //    // Only 1274 keV ±10 keV born in target?
+    //    if (std::abs(E - 1.274 * MeV) >= 10 * keV ||
+    //        birthVolume != fDetector->GetLogicTarget())
+    //    {
+    //        return;
+    //    }
+
+    //    // Only count when crossing a boundary
+    //    if (preStepVolume == postStepVolume) return;
+
+    //    // Forward path
+    //    if ((preStepVolume == fDetector->GetLogicKapton1() || postStepVolume == fDetector->GetLogicKapton1()) &&
+    //        !trackInfo->IsCountedKapton1())
+    //    {
+    //        run->AddEnterKapton1();
+    //        trackInfo->SetCountedKapton1();
+    //    }
+
+    //    if ((preStepVolume == fDetector->GetLogicDisk1() || postStepVolume == fDetector->GetLogicDisk1()) &&
+    //        !trackInfo->IsCountedDisk1())
+    //    {
+    //        run->AddEnterDisk1();
+    //        trackInfo->SetCountedDisk1();
+    //    }
+
+    //    if (postStepVolume == fDetector->GetLogicDetector1() &&
+    //        !trackInfo->IsCountedDet1())
+    //    {
+    //        run->AddReachDet1();
+    //        trackInfo->SetCountedDet1();
+    //    }
+
+    //    // Backward path
+    //    if ((preStepVolume == fDetector->GetLogicKapton2() || postStepVolume == fDetector->GetLogicKapton2()) &&
+    //        !trackInfo->IsCountedKapton2())
+    //    {
+    //        run->AddEnterKapton2();
+    //        trackInfo->SetCountedKapton2();
+    //    }
+
+    //    if ((preStepVolume == fDetector->GetLogicDisk2() || postStepVolume == fDetector->GetLogicDisk2()) &&
+    //        !trackInfo->IsCountedDisk2())
+    //    {
+    //        run->AddEnterDisk2();
+    //        trackInfo->SetCountedDisk2();
+    //    }
+
+    //    if (postStepVolume == fDetector->GetLogicDetector2() &&
+    //        !trackInfo->IsCountedDet2())
+    //    {
+    //        run->AddReachDet2();
+    //        trackInfo->SetCountedDet2();
+    //    }
+    //}
+
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void SteppingAction::HandleGammaStep(const G4Step* aStep,
+    Run* run,
+    G4LogicalVolume* preVol,
+    G4LogicalVolume* postVol,
+    G4LogicalVolume* birthVol) const
+{
+    auto track = aStep->GetTrack();
+    
+}

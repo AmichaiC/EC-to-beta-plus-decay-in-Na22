@@ -29,22 +29,26 @@
 
 #include "ActionInitialization.hh"
 #include "PrimaryGeneratorAction.hh"
+#include "DetectorConstruction.hh"
 #include "RunAction.hh"
 #include "EventAction.hh"
 #include "TrackingAction.hh"
 #include "SteppingAction.hh"
+#include "G4RunManager.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-ActionInitialization::ActionInitialization(DetectorConstruction* detector)
- : fDetector(detector)
-{ }
+ActionInitialization::ActionInitialization()
+{ 
+    fDetector = const_cast<DetectorConstruction*>(static_cast<const DetectorConstruction*>
+        (G4RunManager::GetRunManager()->GetUserDetectorConstruction()));
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void ActionInitialization::BuildForMaster() const
 {
-  RunAction* runAction = new RunAction(fDetector, nullptr);
+  RunAction* runAction = new RunAction(nullptr);
   SetUserAction(runAction);
 }
 
@@ -56,16 +60,16 @@ void ActionInitialization::Build() const
     //PrimaryGeneratorAction* primary = nullptr;
   SetUserAction(primary);
         
-  RunAction* runAction = new RunAction(fDetector, primary);
+  RunAction* runAction = new RunAction(primary);
   SetUserAction(runAction);
   
   EventAction* event = new EventAction();
   SetUserAction(event);  
   
-  TrackingAction* trackingAction = new TrackingAction(fDetector);
+  TrackingAction* trackingAction = new TrackingAction();
   SetUserAction(trackingAction);
-  
-  SteppingAction* steppingAction = new SteppingAction(fDetector, event);
+
+  SteppingAction* steppingAction = new SteppingAction(event);
   SetUserAction(steppingAction);
 }  
 

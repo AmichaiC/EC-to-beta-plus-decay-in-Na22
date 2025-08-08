@@ -36,12 +36,15 @@
 #include "G4UIdirectory.hh"
 #include "G4UIcmdWithAString.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
+#include "G4RunManager.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-DetectorMessenger::DetectorMessenger(DetectorConstruction* det)
-: fDetector(det)
+DetectorMessenger::DetectorMessenger()
 { 
+  fDetector = const_cast<DetectorConstruction*>(
+        static_cast<const DetectorConstruction*>(
+            G4RunManager::GetRunManager()->GetUserDetectorConstruction()));
   fRdecayDir = new G4UIdirectory("/rdecay02/");
   fRdecayDir->SetGuidance("commands specific to this example");
   

@@ -68,11 +68,11 @@ DetectorConstruction::DetectorConstruction() : fVisAttributes()
   fSideAirThickness = 1. * mm;
   fDistanceFromGeToWindow1 = 5.22 * mm;
   fWindowThickness = 0.6 * mm;
-  // TODO - checkk for 5, 15 and 25 cm
-  fdistanceFromTarToDet = 15. * cm;
+  // TODO - checkk for 2, 5, 10, 15 and 25 cm
+  fdistanceFromTarToDet = 2. * cm;
   DefineMaterials();
     
-  fDetectorMessenger = new DetectorMessenger(this);
+  fDetectorMessenger = new DetectorMessenger();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -172,9 +172,9 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
   // Target
   BuildSource();
   
-  // Detectors
-  BuildDetector1();
-  BuildDetector2();
+// Detectors
+  BuildDetector(true); 
+  BuildDetector(false);
 
   // Tungsten Cones
   BuildTungstenCones();
@@ -239,106 +239,48 @@ void DetectorConstruction::BuildSource() {
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void DetectorConstruction::BuildDetector1() {
-    auto carbon_tube1
-        = new G4Tubs("CarbonTube1", fDetectorRadius + fSideAirThickness,
-            fDetectorRadius + fSideAirThickness + fWindowThickness
-            , 0.5 * (fDetectorLength + fWindowThickness + fDistanceFromGeToWindow1)
-            , 0., twopi);
+void DetectorConstruction::BuildDetector(G4bool isPositiveZ)
+{
+    G4double zPos = (isPositiveZ ? +1 : -1) * fdistanceFromTarToDet;
 
-    auto lcarbon_tube1
-        = new G4LogicalVolume(carbon_tube1, carbon, "lCarbonTube1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, fdistanceFromTarToDet), lcarbon_tube1, "lCarbonTube1", fworldLogical, false, 0);
+    auto carbon_tube = new G4Tubs("CarbonTube", fDetectorRadius + fSideAirThickness,
+        fDetectorRadius + fSideAirThickness + fWindowThickness,
+        0.5 * (fDetectorLength + fWindowThickness + fDistanceFromGeToWindow1),
+        0., twopi);
 
-    auto air_tube1
-        = new G4Tubs("AirTube1", fDetectorRadius,
-            fDetectorRadius + fSideAirThickness
-            , 0.5 * (fDetectorLength + fDistanceFromGeToWindow1)
-            , 0., twopi);
+    auto lcarbon_tube = new G4LogicalVolume(carbon_tube, carbon, "lCarbonTube");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, zPos), lcarbon_tube, "lCarbonTube", fworldLogical, false, 0);
 
-    auto lair_tube1
-        = new G4LogicalVolume(air_tube1, fWorldMater, "lairTube1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, fdistanceFromTarToDet), lair_tube1, "lairTube1", fworldLogical, false, 0);
+    auto air_tube = new G4Tubs("AirTube", fDetectorRadius,
+        fDetectorRadius + fSideAirThickness,
+        0.5 * (fDetectorLength + fDistanceFromGeToWindow1),
+        0., twopi);
 
-    G4Tubs* sDetector1 = new G4Tubs("Detector1",
+    auto lair_tube = new G4LogicalVolume(air_tube, fWorldMater, "lAirTube");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, zPos), lair_tube, "lAirTube", fworldLogical, false, 0);
+
+    G4Tubs* sDetector = new G4Tubs("Detector",
         0., fDetectorRadius, 0.5 * fDetectorLength, 0., twopi);
 
+    auto logicDetector = new G4LogicalVolume(sDetector, fDetectorMater, "Detector");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, zPos), logicDetector, "Detector", fworldLogical, false, 0);
 
-    fLogicDetector1 = new G4LogicalVolume(sDetector1,       //shape
-        fDetectorMater,            //material
-        "Detector1");               //name
+    // Store pointers
+    if (isPositiveZ) {
+        fLogicDetector1 = logicDetector;
+    }
+    else {
+        fLogicDetector2 = logicDetector;
+    }
 
-    new G4PVPlacement(0,                         //no rotation
-        G4ThreeVector(0, 0, fdistanceFromTarToDet),     // location    
-        fLogicDetector1,              //logical volume
-        "Detector1",                  //name
-        fworldLogical,                      //mother  volume
-        false,                       //no boolean operation
-        0);                          //copy number
-
-    // visAttributes
+    // Visualization
     G4double transparency = 0.5;
-    auto det1visAttributes = new G4VisAttributes(G4Colour(0.8888, 0.0, 0.0, transparency));
-    fLogicDetector1->SetVisAttributes(det1visAttributes);
-    fVisAttributes.push_back(det1visAttributes);
+    auto visAttr = new G4VisAttributes(G4Colour(0.8888, 0.0, 0.0, transparency));
+    logicDetector->SetVisAttributes(visAttr);
+    fVisAttributes.push_back(visAttr);
 
-
-
-    auto carbonColor = new G4VisAttributes(G4Colour(0.8, 0.8, 0.8, transparency)); // silver
-    lcarbon_tube1->SetVisAttributes(carbonColor);
-    fVisAttributes.push_back(carbonColor);
-
-}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void DetectorConstruction::BuildDetector2() {
-    auto carbon_tube2
-        = new G4Tubs("CarbonTube2", fDetectorRadius + fSideAirThickness,
-            fDetectorRadius + fSideAirThickness + fWindowThickness
-            , 0.5 * (fDetectorLength + fWindowThickness + fDistanceFromGeToWindow1)
-            , 0., twopi);
-
-    auto lcarbon_tube2
-        = new G4LogicalVolume(carbon_tube2, carbon, "lCarbonTube2");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, -fdistanceFromTarToDet), lcarbon_tube2, "lCarbonTube2", fworldLogical, false, 0);
-
-    auto air_tube2
-        = new G4Tubs("AirTube2", fDetectorRadius,
-            fDetectorRadius + fSideAirThickness
-            , 0.5 * (fDetectorLength + fDistanceFromGeToWindow1)
-            , 0., twopi);
-
-    auto lair_tube2
-        = new G4LogicalVolume(air_tube2, fWorldMater, "lairTube2");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, -fdistanceFromTarToDet), lair_tube2, "lairTube2", fworldLogical, false, 0);
-
-    G4Tubs* sDetector2 = new G4Tubs("Detector2",
-        0., fDetectorRadius, 0.5 * fDetectorLength, 0., twopi);
-
-
-    fLogicDetector2 = new G4LogicalVolume(sDetector2,       //shape
-        fDetectorMater,            //material
-        "Detector2");               //name
-
-    new G4PVPlacement(0,                         //no rotation
-        G4ThreeVector(0, 0, -fdistanceFromTarToDet),     // location    
-        fLogicDetector2,              //logical volume
-        "Detector2",                  //name
-        fworldLogical,                      //mother  volume
-        false,                       //no boolean operation
-        0);                          //copy number
-
-
-// VisAttributes
-    G4double transparency = 0.5;
-
-    auto det2visAttributes = new G4VisAttributes(G4Colour(0.8888, 0.0, 0.0, transparency));
-    fLogicDetector2->SetVisAttributes(det2visAttributes);
-    fVisAttributes.push_back(det2visAttributes);
-
-    auto carbonColor = new G4VisAttributes(G4Colour(0.8, 0.8, 0.8, transparency)); // silver
-    lcarbon_tube2->SetVisAttributes(carbonColor);
+    auto carbonColor = new G4VisAttributes(G4Colour(0.8, 0.8, 0.8, transparency));
+    lcarbon_tube->SetVisAttributes(carbonColor);
     fVisAttributes.push_back(carbonColor);
 }
 
@@ -369,7 +311,7 @@ void DetectorConstruction::BuildTungstenCones() {
 
 
     // TODO - CHANGE HERE - do 0.25 mm, 0.05
-    G4double TungstenDiskThickness = 0.05 * mm;
+    G4double TungstenDiskThickness = 0.25 * mm;
     // disk for cone 1
     auto tungsten_tube1
         = new G4Tubs("TungstenTube1", 0, fTargetRadius
@@ -402,7 +344,8 @@ void DetectorConstruction::BuildTungstenCones() {
 
 void DetectorConstruction::BuildKaptonDisks() {
     G4double distanceFromTargetToDisk = 0.75 * fTargetLength;
-    G4double KaptonDiskThickness = 0.005 * mm;
+   // todo was before 0.005 mm, 1. , 0.1
+    G4double KaptonDiskThickness = 0.1 * mm;
 
     //Kapton Tube 1
     auto Kapton_tube1
@@ -514,73 +457,80 @@ void DetectorConstruction::SetDetectorLength(G4double value)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4double DetectorConstruction::GetTargetLength()
+G4double DetectorConstruction::GetTargetLength() const
 {
   return fTargetLength;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4double DetectorConstruction::GetTargetRadius()
+G4double DetectorConstruction::GetTargetRadius() const
 {
   return fTargetRadius;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4Material* DetectorConstruction::GetTargetMaterial()
+G4Material* DetectorConstruction::GetTargetMaterial() const
 {
   return fTargetMater;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4LogicalVolume* DetectorConstruction::GetLogicTarget()
+G4LogicalVolume* DetectorConstruction::GetLogicTarget() const
 {
   return fLogicTarget;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4double DetectorConstruction::GetDetectorLength()
+G4double DetectorConstruction::GetDetectorLength() const
 {
   return fDetectorLength;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4double DetectorConstruction::GetDetectorThickness()
+G4double DetectorConstruction::GetDetectorThickness() const
 {
   return fDetectorRadius;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4Material* DetectorConstruction::GetDetectorMaterial()
+G4Material* DetectorConstruction::GetDetectorMaterial() const
 {
   return fDetectorMater;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4LogicalVolume* DetectorConstruction::GetLogicDetector1()
+G4LogicalVolume* DetectorConstruction::GetLogicDetector1() const
 {
   return fLogicDetector1;
 }
 
-G4LogicalVolume* DetectorConstruction::GetLogicDetector2()
+G4LogicalVolume* DetectorConstruction::GetLogicDetector2() const
 {
     return fLogicDetector2;
 }
 
-G4LogicalVolume* DetectorConstruction::GetLogicDisk1()
+G4LogicalVolume* DetectorConstruction::GetLogicDisk1() const
 {
     return fLogicTungstenTube1;
 }
 
-G4LogicalVolume* DetectorConstruction::GetLogicDisk2()
+G4LogicalVolume* DetectorConstruction::GetLogicDisk2() const
 {
     return fLogicTungstenTube2;
+}
+
+G4LogicalVolume* DetectorConstruction::GetLogicKapton1() const {
+    return fLogicKapton_tube1;
+}
+G4LogicalVolume* DetectorConstruction::GetLogicKapton2() const {
+    return fLogicKapton_tube2;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -46,10 +46,13 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-RunAction::RunAction(DetectorConstruction* det, PrimaryGeneratorAction* prim)
-  : fDetector(det), fPrimary(prim)
+RunAction::RunAction(PrimaryGeneratorAction* prim)
+  : fPrimary(prim)
 {
  // Book predefined histograms
+fDetector = const_cast<DetectorConstruction*>(
+        static_cast<const DetectorConstruction*>(
+            G4RunManager::GetRunManager()->GetUserDetectorConstruction()));
  fHistoManager = new HistoManager(); 
 }
 
@@ -64,7 +67,7 @@ RunAction::~RunAction()
 
 G4Run* RunAction::GenerateRun()
 { 
-  fRun = new Run(fDetector); 
+  fRun = new Run(); 
   return fRun;
 }
 

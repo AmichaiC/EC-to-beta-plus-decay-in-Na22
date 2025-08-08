@@ -39,14 +39,18 @@
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
 #include "MyTrackInfo.hh"
+#include "G4RunManager.hh"
 
 #include <fstream>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-Run::Run(DetectorConstruction* det)
-: fDetector(det)
-{ }
+Run::Run()
+{ 
+   fDetector = const_cast<DetectorConstruction*>(
+        static_cast<const DetectorConstruction*>(
+            G4RunManager::GetRunManager()->GetUserDetectorConstruction()));
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -298,6 +302,13 @@ void Run::Merge(const G4Run* run)
   for (const auto& kv : localRun->fAnnihilationByVolumeFromSource) {
       fAnnihilationByVolumeFromSource[kv.first] += kv.second;
   }
+  // ——— Merge our per-detector 1274 keV photon counters ———
+  fEnterDisk1 += localRun->fEnterDisk1;
+  fReachDet1 += localRun->fReachDet1;
+  fEnterDisk2 += localRun->fEnterDisk2;
+  fReachDet2 += localRun->fReachDet2;
+  fEnterKapton1 += localRun->fEnterKapton1;
+  fEnterKapton2 += localRun->fEnterKapton2;
 
   G4Run::Merge(run); 
 } 
@@ -488,6 +499,42 @@ void Run::EndOfRun()
   G4cout << " Positrons Reaching Detector 1 from target: " << fPositronReachingDetector1 << G4endl;
   G4cout << " Positrons Reaching Detector 2 from target: " << fPositronReachingDetector2 << G4endl;
   G4cout << "=========================================" << G4endl;
+
+
+  // ——— 1274 keV photon blocking summary ———
+  G4cout << "\n--- 1274 keV gamma blocking ---\n";
+
+  // Detector 1 (forward)
+  G4int e1 = GetEnterDisk1(), r1 = GetReachDet1();
+  G4cout
+      << " Det1: entered disk = " << e1
+      << ", reached det = " << r1;
+  if (e1 > 0) {
+      G4double f1 = 1.0 - double(r1) / double(e1);
+      G4cout << ", blocked = " << f1 * 100 << " %";
+  }
+  G4cout << G4endl;
+
+  // Detector 2 (backward)
+  G4int e2 = GetEnterDisk2(), r2 = GetReachDet2();
+  G4cout
+      << " Det2: entered disk = " << e2
+      << ", reached det = " << r2;
+  if (e2 > 0) {
+      G4double f2 = 1.0 - double(r2) / double(e2);
+      G4cout << ", blocked = " << f2 * 100 << " %";
+  }
+  G4cout << "\n-----------------------------\n" << G4endl;
+
+  // Kapton summary - 1274 keV photons crossing
+  {
+      G4int k1 = GetEnterKapton1();
+      G4int k2 = GetEnterKapton2();
+      G4cout << "\n--- Kapton disk crossings ---\n"
+          << " Kapton1 (forward): " << k1 << G4endl
+          << " Kapton2 (backward): " << k2 << "\n"
+          << "------------------------------\n" << G4endl;
+  }
 
   // --- Print annihilations by volume ---
   G4cout << "\n Annihilations of target-born e+ by volume:" << G4endl;

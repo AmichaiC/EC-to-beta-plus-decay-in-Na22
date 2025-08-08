@@ -43,7 +43,7 @@ class DetectorConstruction;
 class TrackingAction : public G4UserTrackingAction {
 
   public:  
-    TrackingAction(DetectorConstruction*);
+    TrackingAction();
    ~TrackingAction() override = default;
    
     void  PreUserTrackingAction(const G4Track*) override;   
@@ -51,6 +51,7 @@ class TrackingAction : public G4UserTrackingAction {
     
   private:
     DetectorConstruction* fDetector = nullptr;
+
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

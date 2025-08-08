@@ -47,7 +47,7 @@ class DetectorMessenger: public G4UImessenger
 {
   public:
   
-    DetectorMessenger(DetectorConstruction* );
+    DetectorMessenger();
    ~DetectorMessenger() override;
     
     void SetNewValue(G4UIcommand*, G4String) override;

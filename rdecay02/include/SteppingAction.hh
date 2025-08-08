@@ -35,6 +35,9 @@
 
 #include "G4UserSteppingAction.hh"
 #include "globals.hh"
+#include "G4LogicalVolume.hh"
+#include "Run.hh"
+
 
 class DetectorConstruction;
 class EventAction;
@@ -44,14 +47,16 @@ class EventAction;
 class SteppingAction : public G4UserSteppingAction
 {
   public:
-    SteppingAction(DetectorConstruction*, EventAction*);
+    SteppingAction(EventAction*);
    ~SteppingAction() override = default;
 
     void UserSteppingAction(const G4Step*) override;
     
   private:
     DetectorConstruction* fDetector = nullptr;  
-    EventAction* fEventAction = nullptr;   
+    EventAction* fEventAction = nullptr;  
+    void HandleGammaStep(const G4Step* aStep, Run* run, G4LogicalVolume* preVol, G4LogicalVolume* postVol, G4LogicalVolume* birthVol) const;
+
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

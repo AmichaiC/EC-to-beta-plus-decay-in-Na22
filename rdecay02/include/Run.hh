@@ -46,7 +46,7 @@ class G4ParticleDefinition;
 class Run : public G4Run
 {
   public:
-    Run(DetectorConstruction*);
+    Run();
    ~Run() override = default;
 
   public:
@@ -67,6 +67,27 @@ class Run : public G4Run
     void Merge(const G4Run*) override;
     void EndOfRun();
     void WriteActivity(G4int); 
+
+    // Detector 1
+    void AddEnterDisk1() { ++fEnterDisk1; }
+    void AddReachDet1() { ++fReachDet1; }
+    void AddEnterKapton1() { ++fEnterKapton1; }
+    G4int GetEnterDisk1() const { return fEnterDisk1; }
+    G4int GetReachDet1()  const { return fReachDet1; }
+    G4int GetEnterKapton1() const { return fEnterKapton1; }
+
+
+    // Detector 2
+    void AddEnterDisk2() { ++fEnterDisk2; }
+    void AddReachDet2() { ++fReachDet2; }
+    void AddEnterKapton2() { ++fEnterKapton2; }
+    G4int GetEnterKapton2() const { return fEnterKapton2; }
+    G4int GetEnterDisk2() const { return fEnterDisk2; }
+    G4int GetReachDet2()  const { return fReachDet2; }
+
+
+
+
    
   private:
     struct ParticleData {
@@ -91,6 +112,17 @@ class Run : public G4Run
     G4int fPositronReachingDetector1 = 0;
     G4int fPositronReachingDetector2 = 0;
     G4int fUniqueAnnihilationCount = 0;
+
+    // Tungsten disk counters
+    // Detector 1 (positive Z)
+    G4int fEnterDisk1 = 0;
+    G4int fReachDet1 = 0;
+    // Detector 2 (negative Z)
+    G4int fEnterDisk2 = 0;
+    G4int fReachDet2 = 0;
+
+    // Kapton disk counters
+    G4int fEnterKapton1 = 0, fEnterKapton2 = 0;
 
     std::map<G4String,G4int>        fProcCounter1;
     std::map<G4String,G4int>        fProcCounter2;   

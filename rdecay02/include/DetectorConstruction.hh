@@ -69,18 +69,20 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     
   public:
       
-    G4double GetTargetLength();
-    G4double GetTargetRadius();
-    G4Material* GetTargetMaterial();       
-    G4LogicalVolume* GetLogicTarget();
+    G4double GetTargetLength() const;
+    G4double GetTargetRadius() const;
+    G4Material* GetTargetMaterial() const;
+    G4LogicalVolume* GetLogicTarget() const;
     
-    G4double GetDetectorLength();
-    G4double GetDetectorThickness();
-    G4Material* GetDetectorMaterial(); 
-    G4LogicalVolume* GetLogicDetector1();
-    G4LogicalVolume* GetLogicDetector2();  
-    G4LogicalVolume* GetLogicDisk1();
-    G4LogicalVolume* GetLogicDisk2();
+    G4double GetDetectorLength() const;
+    G4double GetDetectorThickness() const;
+    G4Material* GetDetectorMaterial() const;
+    G4LogicalVolume* GetLogicDetector1() const;
+    G4LogicalVolume* GetLogicDetector2() const;
+    G4LogicalVolume* GetLogicDisk1() const;
+    G4LogicalVolume* GetLogicDisk2() const;
+    G4LogicalVolume* GetLogicKapton1() const;
+    G4LogicalVolume * GetLogicKapton2() const;
                        
   private:
   
@@ -124,10 +126,10 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4VPhysicalVolume* ConstructVolumes(); 
     void BuildWorld();
     void BuildSource();
-    void BuildDetector1();
-    void BuildDetector2();
+    void BuildDetector(G4bool isPositiveZ);
     void BuildTungstenCones();
     void BuildKaptonDisks();
+
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

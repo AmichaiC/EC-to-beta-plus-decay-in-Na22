@@ -85,7 +85,8 @@ class Run : public G4Run
     G4int GetEnterDisk2() const { return fEnterDisk2; }
     G4int GetReachDet2()  const { return fReachDet2; }
 
-
+    void AddEnterGamma(const G4String& volName, G4bool is511, G4bool is1274);
+    void AddExitGamma(const G4String& volName, G4bool is511, G4bool is1274);
 
 
    
@@ -135,6 +136,10 @@ class Run : public G4Run
 
     // maps the number of annihilations in each volume by the positrons emitted by the source
     std::map<G4String, G4int> fAnnihilationByVolumeFromSource; 
+
+    struct SimpleFlow { long long in511 = 0, out511 = 0, in1274 = 0, out1274 = 0; };
+    std::map<G4String, SimpleFlow> fSimpleFlow;
+
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

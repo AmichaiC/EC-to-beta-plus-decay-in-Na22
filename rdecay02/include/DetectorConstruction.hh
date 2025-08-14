@@ -66,6 +66,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     void SetDetectorMaterial(G4String);               
                    
     void PrintParameters();
+    void BuildField();
     
   public:
       
@@ -83,6 +84,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4LogicalVolume* GetLogicDisk2() const;
     G4LogicalVolume* GetLogicKapton1() const;
     G4LogicalVolume * GetLogicKapton2() const;
+    G4LogicalVolume* GetLogicCone1() const { return fLogicCone1; }
+    G4LogicalVolume* GetLogicCone2() const { return fLogicCone2; }
                        
   private:
   
@@ -110,6 +113,9 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4LogicalVolume* fLogicTungstenTube2 = nullptr;
     G4LogicalVolume* fLogicKapton_tube1 = nullptr;
     G4LogicalVolume* fLogicKapton_tube2 = nullptr;
+    G4LogicalVolume* fLogicCone1 = nullptr;
+    G4LogicalVolume* fLogicCone2 = nullptr;
+    G4Material* fDiskMater = nullptr;
     
                
     G4double           fWorldLength = 0.;

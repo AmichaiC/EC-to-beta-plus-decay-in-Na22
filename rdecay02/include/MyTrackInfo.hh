@@ -3,6 +3,7 @@
 
 #include "G4VUserTrackInformation.hh"
 #include "G4LogicalVolume.hh"
+#include <unordered_set>
 
 class MyTrackInfo : public G4VUserTrackInformation {
 public:
@@ -44,6 +45,10 @@ public:
     G4bool IsCountedDet2() const { return fCountedDet2; }
     void SetCountedDet2(G4bool val = true) { fCountedDet2 = val; }
 
+    bool WasInside(const G4LogicalVolume* v) const { return fInside.count(v) != 0; }
+    void MarkEnter(const G4LogicalVolume* v) { if (v) fInside.insert(v); }
+    void MarkExit(const G4LogicalVolume* v) { if (v) fInside.erase(v); }
+
 private:
     G4bool              fCounted;               // flag for detector crossing
     G4bool              fAnnihilationCounted;   // flag for counting annihilation once
@@ -54,6 +59,8 @@ private:
     G4bool fCountedKapton2 = false;
     G4bool fCountedDisk2 = false;
     G4bool fCountedDet2 = false;
+
+    std::unordered_set<const G4LogicalVolume*> fInside;
 };
 
 #endif // MYTRACKINFO_HH

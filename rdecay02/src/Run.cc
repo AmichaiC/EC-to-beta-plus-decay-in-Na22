@@ -136,14 +136,15 @@ void Run::ParticleCount(G4String name, G4double Ekin, G4int iVol)
                  
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+// TODO CHANGED edep3 back to edep 2 in the method.
 void Run::AddEdep(G4double edep1, G4double edep2, G4double edep3)
 { 
   fEdepTarget  += edep1;
   fEdepTarget2 += edep1*edep1;
   fEdepDetect11  += edep2;
   fEdepDetect12 += edep2*edep2; 
-  fEdepDetect21 += edep2;
-  fEdepDetect22 += edep2 * edep2;
+  fEdepDetect21 += edep3;
+  fEdepDetect22 += edep3 * edep3;
 }
                  
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -152,6 +153,13 @@ void Run::Merge(const G4Run* run)
 {
   const Run* localRun = static_cast<const Run*>(run);
   
+  for (const auto& kv : static_cast<const Run*>(run)->fSimpleFlow) {
+      auto& dst = fSimpleFlow[kv.first];
+      dst.in511 += kv.second.in511;
+      dst.out511 += kv.second.out511;
+      dst.in1274 += kv.second.in1274;
+      dst.out1274 += kv.second.out1274;
+  }
   //primary particle info
   //
   fParticle = localRun->fParticle;
@@ -438,10 +446,10 @@ void Run::EndOfRun()
   //
   G4cout << "\n List of generated particles in target:" << G4endl;
      
-  std::map<G4String,ParticleData>::iterator itc;               
-  for (itc = fParticleDataMap1.begin(); itc != fParticleDataMap1.end(); itc++) {
-     G4String name = itc->first;
-     ParticleData data = itc->second;
+  std::map<G4String,ParticleData>::iterator itn1;               
+  for (itn1 = fParticleDataMap1.begin(); itn1 != fParticleDataMap1.end(); itn1++) {
+     G4String name = itn1->first;
+     ParticleData data = itn1->second;
      G4int count = data.fCount;
      G4double eMean = data.fEmean/count;
      G4double eMin = data.fEmin;
@@ -458,10 +466,10 @@ void Run::EndOfRun()
  // 1
  G4cout << "\n List of generated particles in detector 1:" << G4endl;
      
- std::map<G4String,ParticleData>::iterator itn1;               
- for (itn1 = fParticleDataMap2.begin(); itn1 != fParticleDataMap2.end(); itn1++) {
-    G4String name = itn1->first;
-    ParticleData data = itn1->second;
+ std::map<G4String,ParticleData>::iterator itn2;               
+ for (itn2 = fParticleDataMap2.begin(); itn2 != fParticleDataMap2.end(); itn2++) {
+    G4String name = itn2->first;
+    ParticleData data = itn2->second;
     G4int count = data.fCount;
     G4double eMean = data.fEmean/count;
     G4double eMin = data.fEmin;
@@ -477,10 +485,10 @@ void Run::EndOfRun()
   //2 
   G4cout << "\n List of generated particles in detector 2:" << G4endl;
 
-  std::map<G4String, ParticleData>::iterator itn2;
-  for (itn2 = fParticleDataMap2.begin(); itn2 != fParticleDataMap2.end(); itn2++) {
-      G4String name = itn2->first;
-      ParticleData data = itn2->second;
+  std::map<G4String, ParticleData>::iterator itn3;
+  for (itn3 = fParticleDataMap3.begin(); itn3 != fParticleDataMap3.end(); itn3++) {
+      G4String name = itn3->first;
+      ParticleData data = itn3->second;
       G4int count = data.fCount;
       G4double eMean = data.fEmean / count;
       G4double eMin = data.fEmin;
@@ -545,6 +553,28 @@ void Run::EndOfRun()
           << G4endl;
   }
 
+  G4cout << "\n=== Photon flow per volume (+-10 keV windows) ===\n";
+  G4cout << std::left << std::setw(22) << "Volume"
+      << std::right << std::setw(12) << "in_511"
+      << std::setw(12) << "out_511"
+      << std::setw(12) << "abs_511"
+      << std::setw(12) << "in_1274"
+      << std::setw(12) << "out_1274"
+      << std::setw(12) << "abs_1274" << G4endl;
+
+  for (const auto& kv : fSimpleFlow) {
+      const auto& name = kv.first;
+      const auto& c = kv.second;
+      G4cout << std::left << std::setw(22) << name
+          << std::right << std::setw(12) << c.in511
+          << std::setw(12) << c.out511
+          << std::setw(12) << (c.in511 - c.out511)
+          << std::setw(12) << c.in1274
+          << std::setw(12) << c.out1274
+          << std::setw(12) << (c.in1274 - c.out1274) << G4endl;
+  }
+  G4cout << "===============================================\n";
+
  
   // activities in VR mode
   //
@@ -563,6 +593,18 @@ void Run::EndOfRun()
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void Run::AddEnterGamma(const G4String& volName, G4bool is511, G4bool is1274) {
+    auto& c = fSimpleFlow[volName];
+    if (is511)  ++c.in511;
+    if (is1274) ++c.in1274;
+}
+
+void Run::AddExitGamma(const G4String& volName, G4bool is511, G4bool is1274) {
+    auto& c = fSimpleFlow[volName];
+    if (is511)  ++c.out511;
+    if (is1274) ++c.out1274;
+}
 
 void Run::WriteActivity(G4int nevent)
 {

@@ -118,7 +118,7 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
     { fDetector->SetTargetLength(fTargLengthCmd->GetNewDoubleValue(newValue));}
     
   if (command == fTargRadiusCmd ) 
-    {fDetector->SetTargetRadius(fTargLengthCmd->GetNewDoubleValue(newValue));}
+    {fDetector->SetTargetRadius(fTargRadiusCmd->GetNewDoubleValue(newValue));}
     
   if (command == fDetectMatCmd )
     { fDetector->SetDetectorMaterial(newValue);}

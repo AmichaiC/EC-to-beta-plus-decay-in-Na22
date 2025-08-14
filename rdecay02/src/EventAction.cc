@@ -71,7 +71,8 @@ void EventAction::EndOfEventAction(const G4Event*)
  G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
  
  G4double Etot = fEdep1 + fEdep2 + fEdep3;
- G4double Wtot = (fWeight1 + fWeight2 + fWeight3)/Etot;
+ G4double Wtot = 0.;
+ if (Etot > 0.) Wtot = (fWeight1 + fWeight2 + fWeight3) / Etot;
  
  // pulse height in target
  //

@@ -54,6 +54,9 @@
 
 
 #include "G4Colour.hh"
+#include "G4UniformMagField.hh"
+#include "G4TransportationManager.hh"
+#include "G4FieldManager.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -120,7 +123,7 @@ void DetectorConstruction::DefineMaterials()
   G4double carbon_z = 6.0;                     // Atomic number of Carbon
   G4double carbon_a = 12.011 * g / mole;       // Atomic mass of Carbon
   G4double carbon_density = 2.267 * g / cm3;   // Density of Carbon in solid form
-  G4Element* elC = new G4Element("Carbon", "C", z, a);
+  G4Element* elC = new G4Element("Carbon", "C", carbon_z, carbon_a);
   carbon = new G4Material("CustomCarbon", carbon_density, 1, kStateSolid, temperature, pressure);
   carbon->AddElement(elC, 1);
 
@@ -154,6 +157,38 @@ void DetectorConstruction::DefineMaterials()
   fKaptonMater->AddElement(nistManager->FindOrBuildElement("H"), 10);
   fKaptonMater->AddElement(nistManager->FindOrBuildElement("O"), 5);
 
+  // Other Options for Disk Material
+
+  G4Material* matPE = nistManager->FindOrBuildMaterial("G4_POLYETHYLENE");
+  G4Material* matPP = nistManager->FindOrBuildMaterial("G4_POLYPROPYLENE");
+  G4Material* matBe = nistManager->FindOrBuildMaterial("G4_Be");
+  G4Material* matLi = nistManager->FindOrBuildMaterial("G4_Li");
+  G4Material* matGraphite = nistManager->FindOrBuildMaterial("G4_GRAPHITE");
+  G4Material* matPMMA = nistManager->FindOrBuildMaterial("G4_PLEXIGLASS"); // acrylic
+  G4Material* matPTFE = nistManager->FindOrBuildMaterial("G4_TEFLON");
+  G4Material* matAl = nistManager->FindOrBuildMaterial("G4_Al");
+  G4Material* matSi = nistManager->FindOrBuildMaterial("G4_Si");
+
+  // TODO - CHANGE THE DISK MATERIAL HERE
+  const G4String diskChoice = "Kapton";
+
+  if (diskChoice == "Kapton")            fDiskMater = fKaptonMater;
+  else if (diskChoice == "G4_POLYETHYLENE")   fDiskMater = matPE;
+  else if (diskChoice == "G4_POLYPROPYLENE")  fDiskMater = matPP;
+  else if (diskChoice == "G4_Be")             fDiskMater = matBe;
+  else if (diskChoice == "G4_Li")             fDiskMater = matLi;
+  else if (diskChoice == "G4_GRAPHITE")       fDiskMater = matGraphite;
+  else if (diskChoice == "G4_PLEXIGLASS")     fDiskMater = matPMMA;
+  else if (diskChoice == "G4_TEFLON")         fDiskMater = matPTFE;
+  else if (diskChoice == "G4_Al")             fDiskMater = matAl;
+  else if (diskChoice == "G4_Si")             fDiskMater = matSi;
+  else {
+      G4Exception("DetectorConstruction::DefineMaterials()",
+          "BadDiskMaterial", JustWarning,
+          ("Unknown diskChoice: " + diskChoice + " — falling back to Kapton").c_str());
+      fDiskMater = fKaptonMater;
+  }
+
 
 }
 
@@ -169,6 +204,7 @@ G4VPhysicalVolume* DetectorConstruction::ConstructVolumes()
   
   // World
   BuildWorld();
+  BuildField();
   // Target
   BuildSource();
   
@@ -262,16 +298,16 @@ void DetectorConstruction::BuildDetector(G4bool isPositiveZ)
     G4Tubs* sDetector = new G4Tubs("Detector",
         0., fDetectorRadius, 0.5 * fDetectorLength, 0., twopi);
 
-    auto logicDetector = new G4LogicalVolume(sDetector, fDetectorMater, "Detector");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, zPos), logicDetector, "Detector", fworldLogical, false, 0);
+    const char* detLVname = isPositiveZ ? "Detector1" : "Detector2";
+    const char* detPVname = isPositiveZ ? "Detector1_phys" : "Detector2_phys";
+
+    auto logicDetector = new G4LogicalVolume(sDetector, fDetectorMater, detLVname);
+    new G4PVPlacement(0, G4ThreeVector(0, 0, zPos),
+        logicDetector, detPVname, fworldLogical, false, 0);
 
     // Store pointers
-    if (isPositiveZ) {
-        fLogicDetector1 = logicDetector;
-    }
-    else {
-        fLogicDetector2 = logicDetector;
-    }
+    if (isPositiveZ) fLogicDetector1 = logicDetector;
+    else             fLogicDetector2 = logicDetector;
 
     // Visualization
     G4double transparency = 0.5;
@@ -300,76 +336,85 @@ void DetectorConstruction::BuildTungstenCones() {
     // Cone to Detector 1
     G4Cons* cone1 = new G4Cons("Cone1", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
 
-    G4LogicalVolume* logicCone1 = new G4LogicalVolume(cone1, fTungstenMater, "LogicCone1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, h + distanceFromTargetToCone), logicCone1, "PhysCone1", fworldLogical, false, 0);
+    fLogicCone1 = new G4LogicalVolume(cone1, fTungstenMater, "LogicCone1");
+    new G4PVPlacement(0, G4ThreeVector(0, 0, h + distanceFromTargetToCone), fLogicCone1, "PhysCone1", fworldLogical, false, 0);
 
     // Cone to Detector 2
     G4Cons* cone2 = new G4Cons("Cone2", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
 
-    G4LogicalVolume* logicCone2 = new G4LogicalVolume(cone2, fTungstenMater, "LogicCone2");
-    new G4PVPlacement(rotation180, G4ThreeVector(0, 0, -h - distanceFromTargetToCone), logicCone2, "PhysCone2", fworldLogical, false, 0);
+    fLogicCone2 = new G4LogicalVolume(cone2, fTungstenMater, "LogicCone2");
+    new G4PVPlacement(rotation180, G4ThreeVector(0, 0, -h - distanceFromTargetToCone), fLogicCone2, "PhysCone2", fworldLogical, false, 0);
 
-
+	// TODO - change use of Tungsten disks
+    static const bool kUseTungstenDisks = false;
     // TODO - CHANGE HERE - do 0.25 mm, 0.05
-    G4double TungstenDiskThickness = 0.25 * mm;
-    // disk for cone 1
-    auto tungsten_tube1
-        = new G4Tubs("TungstenTube1", 0, fTargetRadius
-            , 0.5 * TungstenDiskThickness, 0., twopi);
-    fLogicTungstenTube1
-        = new G4LogicalVolume(tungsten_tube1, fTungstenMater, "lTungstenTube1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTargetToCone + 0.5 * fTargetLength + 0.5 * TungstenDiskThickness), fLogicTungstenTube1, "lTungstenTube1", fworldLogical, false, 0);
+    G4double TungstenDiskThickness = 0.001 * mm;
+    if (kUseTungstenDisks) {
+        // disk for cone 1
+        auto tungsten_tube1
+            = new G4Tubs("TungstenTube1", 0, fTargetRadius
+                , 0.5 * TungstenDiskThickness, 0., twopi);
+        fLogicTungstenTube1
+            = new G4LogicalVolume(tungsten_tube1, fTungstenMater, "lTungstenTube1");
+        new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTargetToCone + 0.5 * fTargetLength + 0.5 * TungstenDiskThickness), fLogicTungstenTube1, "lTungstenTube1", fworldLogical, false, 0);
 
 
-    // disk for cone 2
-    auto tungsten_tube2
-        = new G4Tubs("TungstenTube2", 0, fTargetRadius
-            , 0.5 * TungstenDiskThickness, 0., twopi);
-    fLogicTungstenTube2
-        = new G4LogicalVolume(tungsten_tube2, fTungstenMater, "lTungstenTube2");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTargetToCone - 0.5 * fTargetLength - 0.5 * TungstenDiskThickness), fLogicTungstenTube2, "lTungstenTube2", fworldLogical, false, 0);
+        // disk for cone 2
+        auto tungsten_tube2
+            = new G4Tubs("TungstenTube2", 0, fTargetRadius
+                , 0.5 * TungstenDiskThickness, 0., twopi);
+        fLogicTungstenTube2
+            = new G4LogicalVolume(tungsten_tube2, fTungstenMater, "lTungstenTube2");
+        new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTargetToCone - 0.5 * fTargetLength - 0.5 * TungstenDiskThickness), fLogicTungstenTube2, "lTungstenTube2", fworldLogical, false, 0);
 
-    // VisAttributes for Cones
-    G4double transparency = 0.5;
-    auto coneVisAttr1 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
-    logicCone1->SetVisAttributes(coneVisAttr1);
-    fLogicTungstenTube1->SetVisAttributes(coneVisAttr1);
-    fVisAttributes.push_back(coneVisAttr1);
+        // VisAttributes for Cones
+        G4double transparency = 0.5;
+        auto coneVisAttr1 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
+        fLogicCone1->SetVisAttributes(coneVisAttr1);
+        fLogicTungstenTube1->SetVisAttributes(coneVisAttr1);
+        fVisAttributes.push_back(coneVisAttr1);
 
-    auto coneVisAttr2 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
-    logicCone2->SetVisAttributes(coneVisAttr2);
-    fLogicTungstenTube2->SetVisAttributes(coneVisAttr2);
-    fVisAttributes.push_back(coneVisAttr2);
+        auto coneVisAttr2 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
+        fLogicCone2->SetVisAttributes(coneVisAttr2);
+        fLogicTungstenTube2->SetVisAttributes(coneVisAttr2);
+        fVisAttributes.push_back(coneVisAttr2);
+    }
+    else {
+        fLogicTungstenTube1 = nullptr;
+        fLogicTungstenTube2 = nullptr;
+    }
 }
 
 void DetectorConstruction::BuildKaptonDisks() {
-    G4double distanceFromTargetToDisk = 0.75 * fTargetLength;
-   // todo was before 0.005 mm, 1. , 0.1
-    G4double KaptonDiskThickness = 0.1 * mm;
+    // TODO - change ring (true) vs solid disk (false)
+    const G4bool   kAsAnnulus = false;         
+    const G4double kThickness = 0.4 * mm;      // 0.025–0.10 mm works well
+    const G4double kOuterFrac = 5.0;         // OUTER RADIUS = 0.50 * fTargetRadius
+    const G4double kInnerFrac = 0.5;      // ring radial width (material between rmin and rmax)
 
-    //Kapton Tube 1
-    auto Kapton_tube1
-        = new G4Tubs("KaptonTube1", 0, fTargetRadius
-            , 0.5 * KaptonDiskThickness, 0., twopi);
-    fLogicKapton_tube1
-        = new G4LogicalVolume(Kapton_tube1, fKaptonMater, "lKapton_tube1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTargetToDisk), fLogicKapton_tube1, "lKapton_tube1", fworldLogical, false, 0);
+    // pick which target radius to reference:
+    const G4double r_ref = fTargetRadius;       // or use fTargetRadiusActive if you prefer
 
-    //Kapton Tube 2
-    auto Kapton_tube2
-        = new G4Tubs("KaptonTube2", 0, fTargetRadius
-            , 0.5 * KaptonDiskThickness, 0., twopi);
-    fLogicKapton_tube2
-        = new G4LogicalVolume(Kapton_tube2, fKaptonMater, "lKapton_tube2");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTargetToDisk), fLogicKapton_tube2, "lKapton_tube2", fworldLogical, false, 0);
+    // compute radii safely
+    const G4double rmax = std::max(0.2 * mm, kOuterFrac * r_ref);
+    const G4double rmin = kAsAnnulus ? kInnerFrac * fTargetRadius : 0.0;
 
+    const G4double z = 0.75 * fTargetLength;
 
-    // VisAttributes for Disks
-    G4double transparency = 0.5;
-    auto KaptonDiskVisAttr1 = new G4VisAttributes(G4Colour(1.0, 0.5, 0.0, transparency)); // orange
-    fLogicKapton_tube1->SetVisAttributes(KaptonDiskVisAttr1);
-    fLogicKapton_tube2->SetVisAttributes(KaptonDiskVisAttr1);
-    fVisAttributes.push_back(KaptonDiskVisAttr1);
+    // Disk 1 ( +z )
+    auto s1 = new G4Tubs("Kapton1", rmin, rmax, 0.5 * kThickness, 0., twopi);
+    fLogicKapton_tube1 = new G4LogicalVolume(s1, fDiskMater, "lKapton_tube1");
+    new G4PVPlacement(nullptr, { 0,0,+z }, fLogicKapton_tube1, "lKapton_tube1", fworldLogical, false, 0);
+
+    // Disk 2 ( -z )
+    auto s2 = new G4Tubs("Kapton2", rmin, rmax, 0.5 * kThickness, 0., twopi);
+    fLogicKapton_tube2 = new G4LogicalVolume(s2, fDiskMater, "lKapton_tube2");
+    new G4PVPlacement(nullptr, { 0,0,-z }, fLogicKapton_tube2, "lKapton_tube2", fworldLogical, false, 0);
+
+    auto vis = new G4VisAttributes(G4Colour(1.0, 0.5, 0.0, 0.5));
+    fLogicKapton_tube1->SetVisAttributes(vis);
+    fLogicKapton_tube2->SetVisAttributes(vis);
+    fVisAttributes.push_back(vis);
 }
 
 
@@ -421,6 +466,18 @@ void DetectorConstruction::SetDetectorMaterial(G4String materialChoice)
     G4cout << "\n--> warning from DetectorConstruction::SetDetectorMaterial : "
            << materialChoice << " not found" << G4endl;
   }              
+}
+
+void DetectorConstruction::BuildField() {
+	// TODO - change if to use magenetic field
+    const G4bool   kIsMagneticField = false;
+    if (!kIsMagneticField) {
+        return;
+	}
+    auto magField = new G4UniformMagField(G4ThreeVector(0., 0., 0.2 * tesla)); // tweak 0.1–0.3 T
+    auto fieldMgr = G4TransportationManager::GetTransportationManager()->GetFieldManager();
+    fieldMgr->SetDetectorField(magField);
+    fieldMgr->CreateChordFinder(magField); // simple default chord finder
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

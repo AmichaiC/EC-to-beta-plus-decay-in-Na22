@@ -63,10 +63,11 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+// TODO - change to decay or calibration
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
     // Part for Calibration of 511 and 1274 keV photons
-    auto gamma = G4ParticleTable::GetParticleTable()->FindParticle("gamma");
+    /*auto gamma = G4ParticleTable::GetParticleTable()->FindParticle("gamma");
     fParticleGun->SetParticleDefinition(gamma);
     fParticleGun->SetParticleEnergy(1274 * keV);
     fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.));
@@ -75,7 +76,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     G4double phi = 2.0 * CLHEP::pi * G4UniformRand();
     G4ThreeVector direction(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
     fParticleGun->SetParticleMomentumDirection(direction);
-    fParticleGun->GeneratePrimaryVertex(anEvent);
+    fParticleGun->GeneratePrimaryVertex(anEvent);*/
 
     //simulation of one e+
 
@@ -88,19 +89,13 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
     // Part for Na-22 decay
 
-  //if (fParticleGun->GetParticleDefinition() == G4Geantino::Geantino()) {  
-  //  G4int Z = 11, A = 22;
-  //  G4double ionCharge   = 0.*eplus;
-  //  G4double excitEnergy = 0.*keV;
-  //  
-  //  G4ParticleDefinition* ion
-  //     = G4IonTable::GetIonTable()->GetIon(Z,A,excitEnergy);
-  //  fParticleGun->SetParticleDefinition(ion);
-  //  fParticleGun->SetParticleCharge(ionCharge);
-  //}    
-  ////create vertex
-  ////   
-  //fParticleGun->GeneratePrimaryVertex(anEvent);
+    auto ion = G4IonTable::GetIonTable()->GetIon(11, 22, 0. * keV);
+    fParticleGun->SetParticleDefinition(ion);
+    fParticleGun->SetParticleCharge(0. * eplus);
+    fParticleGun->SetParticleEnergy(0. * eV);                           // at rest
+    fParticleGun->SetParticlePosition(G4ThreeVector(0, 0, 0));
+    fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0, 0, 1)); // dir irrelevant at 0 eV
+    fParticleGun->GeneratePrimaryVertex(anEvent);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

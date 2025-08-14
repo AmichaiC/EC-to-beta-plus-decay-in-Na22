@@ -35,6 +35,15 @@
 #include "G4UnitsTable.hh"
 #include "G4Positron.hh"
 
+namespace {
+    inline bool InWindow(G4double E, G4double center, G4double halfWidth) {
+        return std::abs(E - center) <= halfWidth;
+    }
+    inline bool entersVolume(G4LogicalVolume* pre, G4LogicalVolume* post, G4LogicalVolume* V) {
+        return (V && post == V && pre != V);
+    }
+}
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 SteppingAction::SteppingAction(EventAction* event)
     :fEventAction(event)
@@ -51,11 +60,17 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     Run* run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun());
     auto analysisManager = G4AnalysisManager::Instance();
 
-    // Pre- and post-step volumes
+    // Pre- and post-step volumes (guard post at boundaries)
     auto preStepVolume = aStep->GetPreStepPoint()->GetTouchableHandle()
         ->GetVolume()->GetLogicalVolume();
-    auto postStepVolume = aStep->GetPostStepPoint()->GetTouchableHandle()
-        ->GetVolume()->GetLogicalVolume();
+
+    G4LogicalVolume* postStepVolume = nullptr;
+    {
+        auto postH = aStep->GetPostStepPoint()->GetTouchableHandle();
+        if (postH && postH->GetVolume()) {
+            postStepVolume = postH->GetVolume()->GetLogicalVolume();
+        }
+    }
 
     // Volume ID for energy deposition
     G4int iVol = 0;
@@ -63,19 +78,19 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
     else if (preStepVolume == fDetector->GetLogicDetector1()) iVol = 2;
     else if (preStepVolume == fDetector->GetLogicDetector2()) iVol = 3;
 
-    // Count all processes by volume
+    // Count all processes by volume (keep as you had)
     auto process = aStep->GetPostStepPoint()->GetProcessDefinedStep();
     G4String volName = preStepVolume->GetName();
     run->CountProcesses(process, volName);
 
-    // Energy deposition and ntuple filling
+    // Energy deposition and ntuple filling (your original T3 writes)
     G4double edep = aStep->GetTotalEnergyDeposit();
     if (edep > 0.) {
         G4double time = aStep->GetPreStepPoint()->GetGlobalTime();
         G4double weight = aStep->GetPreStepPoint()->GetWeight();
         fEventAction->AddEdep(iVol, edep, time, weight);
 
-        G4int id = 2;
+        G4int id = 2; // T3
         analysisManager->FillNtupleDColumn(id, 0, edep);
         analysisManager->FillNtupleDColumn(id, 1, time / s);
         analysisManager->FillNtupleDColumn(id, 2, weight);
@@ -106,69 +121,84 @@ void SteppingAction::UserSteppingAction(const G4Step* aStep)
         }
     }
 
-    // code for if 1274 keV photon is absorbs in the disks or getting through - doesn't work, program collapse
+    // ------------------------------
+    // Photon blocking / reaching counters (minimal overhead)
+    // ------------------------------
+    // Only proceed for gammas and for boundary crossings
+    // ------------------------------
+// Simple photon flow counters
+// ------------------------------
+    // ------------------------------
+// Simple photon flow counters with per-track enter/exit pairing
+// ------------------------------
+    if (name == "gamma") {
+        // only count at geometry boundaries
+        if (aStep->GetPostStepPoint()->GetStepStatus() != fGeomBoundary) return;
 
-    // only 1274 keV gammas
-    //if (name == "gamma") {
-    //    /*HandleGammaStep(aStep, run, preStepVolume, postStepVolume, birthVolume);*/
-    //    G4double E = track->GetKineticEnergy();
+        const G4double E = aStep->GetTrack()->GetKineticEnergy();
+        const G4double halfWin = 10.0 * keV;
+        const G4bool is511 = std::abs(E - 0.511 * MeV) <= halfWin;
+        const G4bool is1274 = std::abs(E - 1.274 * MeV) <= halfWin;
+        if (!(is511 || is1274)) return;
 
-    //    // Only 1274 keV ±10 keV born in target?
-    //    if (std::abs(E - 1.274 * MeV) >= 10 * keV ||
-    //        birthVolume != fDetector->GetLogicTarget())
-    //    {
-    //        return;
-    //    }
+        // origin filter (Na-22 chain): born in target OR from annihilation
+        bool fromNa22Chain = false;
+        if (birthVolume == fDetector->GetLogicTarget()) fromNa22Chain = true;
+        else {
+            auto cr = aStep->GetTrack()->GetCreatorProcess();
+            if (cr && cr->GetProcessName() == "annihil") fromNa22Chain = true;
+        }
+        if (!fromNa22Chain) return;
 
-    //    // Only count when crossing a boundary
-    //    if (preStepVolume == postStepVolume) return;
+        // track info (we need it for inside/outside bookkeeping)
+        auto trackInfo = dynamic_cast<MyTrackInfo*>(aStep->GetTrack()->GetUserInformation());
+        if (!trackInfo) {
+            trackInfo = new MyTrackInfo();
+            const_cast<G4Track*>(aStep->GetTrack())->SetUserInformation(trackInfo);
+            trackInfo->SetBirthVolume(birthVolume); // keep your existing behavior
+        }
 
-    //    // Forward path
-    //    if ((preStepVolume == fDetector->GetLogicKapton1() || postStepVolume == fDetector->GetLogicKapton1()) &&
-    //        !trackInfo->IsCountedKapton1())
-    //    {
-    //        run->AddEnterKapton1();
-    //        trackInfo->SetCountedKapton1();
-    //    }
+        auto run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun());
 
-    //    if ((preStepVolume == fDetector->GetLogicDisk1() || postStepVolume == fDetector->GetLogicDisk1()) &&
-    //        !trackInfo->IsCountedDisk1())
-    //    {
-    //        run->AddEnterDisk1();
-    //        trackInfo->SetCountedDisk1();
-    //    }
+        auto preLV = aStep->GetPreStepPoint()->GetTouchable()->GetVolume()->GetLogicalVolume();
+        G4LogicalVolume* postLV = nullptr;
+        if (auto postH = aStep->GetPostStepPoint()->GetTouchableHandle(); postH && postH->GetVolume())
+            postLV = postH->GetVolume()->GetLogicalVolume();
 
-    //    if (postStepVolume == fDetector->GetLogicDetector1() &&
-    //        !trackInfo->IsCountedDet1())
-    //    {
-    //        run->AddReachDet1();
-    //        trackInfo->SetCountedDet1();
-    //    }
+        // helper: count enter/exit only with proper pairing using MyTrackInfo
+        auto countFor = [&](G4LogicalVolume* V) {
+            if (!V) return;
+            const G4String vname = V->GetName();
 
-    //    // Backward path
-    //    if ((preStepVolume == fDetector->GetLogicKapton2() || postStepVolume == fDetector->GetLogicKapton2()) &&
-    //        !trackInfo->IsCountedKapton2())
-    //    {
-    //        run->AddEnterKapton2();
-    //        trackInfo->SetCountedKapton2();
-    //    }
+            // ENTER: post==V && pre!=V
+            if (postLV == V && preLV != V) {
+                run->AddEnterGamma(vname, is511, is1274);
+                trackInfo->MarkEnter(V);
+            }
+            // EXIT: pre==V && post!=V  --> only if we had marked as inside
+            if (preLV == V && postLV != V) {
+                if (trackInfo->WasInside(V)) {
+                    run->AddExitGamma(vname, is511, is1274);
+                    trackInfo->MarkExit(V);
+                }
+                // else: photon was born inside V (no prior enter) -> do not count exit
+            }
+            };
 
-    //    if ((preStepVolume == fDetector->GetLogicDisk2() || postStepVolume == fDetector->GetLogicDisk2()) &&
-    //        !trackInfo->IsCountedDisk2())
-    //    {
-    //        run->AddEnterDisk2();
-    //        trackInfo->SetCountedDisk2();
-    //    }
+        // Count for the parts you care about:
+        countFor(fDetector->GetLogicKapton1());
+        countFor(fDetector->GetLogicKapton2());
+        countFor(fDetector->GetLogicDisk1());   // tungsten near +Z
+        countFor(fDetector->GetLogicDisk2());   // tungsten near -Z
 
-    //    if (postStepVolume == fDetector->GetLogicDetector2() &&
-    //        !trackInfo->IsCountedDet2())
-    //    {
-    //        run->AddReachDet2();
-    //        trackInfo->SetCountedDet2();
-    //    }
-    //}
+        // Optionally include detectors:
+        // countFor(fDetector->GetLogicDetector1());
+        // countFor(fDetector->GetLogicDetector2());
+    }
+
 
 }
+
 
 
 void SteppingAction::HandleGammaStep(const G4Step* aStep,

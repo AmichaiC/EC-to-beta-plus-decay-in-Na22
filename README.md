@@ -1,3 +1,4 @@
+System: Na22 source in the middle, from both sides Ge detectors with tungsten cones connecting the source to the detectors, and in between from both sides kapton and tungsten disks to annihilate the positrons that are emitted.
 Changing the source - 3 options: Na22, Photon (511 or 1274 keV) or positrons in PrimaryGeneratorAction.cc in the method GeneratePrimaries, uncomment the needed part and comment out the rest.
 
 Changing the distance from the source to the detectors and the thickness of the Kapton and Tungsten disks in DetectorConstruction.cc all marked in TODO comment.

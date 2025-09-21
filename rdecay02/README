@@ -14,3 +14,5 @@ In order to run the code use run.mac.
 The code creates root files which can be used with the file plotHisto.C to show the distribution of energy of the photons detected in graphs and in excel files of both detectors. H11 is for detector 1, and the second is the same in H19.
 
 .exe file is being created with those excel files in build\Release.
+
+results from the simulation can be seen under 5Kapton with the the thickness of the Kapton and tungsten including excel files and text files which has also the results of the simulation - Particles detected in different parts of the system, events and more...

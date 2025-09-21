@@ -1,7 +1,7 @@
 #
 # Macro file for "rdecay02.cc"
 #
-
+/run/numberOfThreads 14   
 /run/initialize  # Ensure this is the first command
 
 # Set verbosity levels
@@ -33,6 +33,7 @@
 
 
 # Run settings
-/run/printProgress 100000
-#/run/beamOn 100000000
-/run/beamOn 1000000
+/run/printProgress 1000000
+#/run/beamOn 1000000
+/run/beamOn 10000000
+

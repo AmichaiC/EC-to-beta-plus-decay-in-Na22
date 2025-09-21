@@ -1,0 +1,31 @@
+#
+# debug_one_no_vis.mac — run ONE event (no visuals)
+#
+
+# Threads MUST be set before initialize
+
+# Init
+/run/initialize
+
+# Physics/decay knobs
+/process/had/rdm/thresholdForVeryLongDecayTime 1.0e+60 year
+
+# Analysis — only activate ntuples that exist
+/analysis/list
+/analysis/ntuple/setActivation 1 true
+/analysis/ntuple/setActivation 2 true
+/analysis/ntuple/setActivation 3 true
+# Do NOT activate 4 unless /analysis/list shows it exists
+# /analysis/ntuple/setActivation 4 true
+
+# Optional: output filename
+# /analysis/setFileName rdecay02_debug
+
+# Logs
+/control/verbose 1
+/run/verbose 1
+/tracking/verbose 2
+/run/printProgress 1
+
+# Run a single event
+/run/beamOn 10

@@ -69,6 +69,12 @@
 # To superimpose all of the events from a given run:
 /vis/scene/endOfEventAction accumulate
 #
+
+# todo - delete 3 lines for simulation annihilation maybe didn't work
+#/vis/track/drawStepByStep
+#/vis/viewer/set/waitForKeystroke true
+#/tracking/verbose 1
+
 # Re-establish auto refreshing and verbosity:
 /vis/viewer/set/autoRefresh true
 /vis/verbose warnings

@@ -71,7 +71,7 @@ DetectorConstruction::DetectorConstruction() : fVisAttributes()
   fSideAirThickness = 1. * mm;
   fDistanceFromGeToWindow1 = 5.22 * mm;
   fWindowThickness = 0.6 * mm;
-  // TODO - checkk for 2, 5, 10, 15 and 25 cm
+  // TODO - check for 2, 5, 10, 15 and 25 cm
   fdistanceFromTarToDet = 2. * cm;
   DefineMaterials();
     
@@ -323,61 +323,101 @@ void DetectorConstruction::BuildDetector(G4bool isPositiveZ)
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void DetectorConstruction::BuildTungstenCones() {
-    G4RotationMatrix* rotation180 = new G4RotationMatrix();
-    rotation180->rotateX(180.0 * deg);
-    G4double rmax1 = fTargetRadius;                    // Outer radius at the base
-    G4double rmin1 = 0.95 * rmax1;                               // Inner radius at the base
-    G4double rmax2 = fDetectorRadius;                  // Outer radius at the top
-    G4double rmin2 = 0.95 * rmax2;                              // Inner radius at the top
-    G4double distanceFromDetToCone = 0.2 * cm;
-    G4double distanceFromTargetToCone = fTargetLength;
-    G4double h = 0.5 * (fdistanceFromTarToDet - fTargetLength - 0.5 * fDetectorLength - 2 * distanceFromDetToCone);
+    // ---------------- geometry knobs (fractions of your existing sizes) -------------
+    const G4double kWallFrac = 0.9;   // inner radius = kWallFrac * outer (thicker wall -> smaller value)
+    const G4double kGapDetFrac = 0.10;   // clearance to detector face as fraction of fDetectorLength
+    const G4double kGapTarFrac = 0.00;   // clearance to target face as fraction of fTargetLength
 
-    // Cone to Detector 1
-    G4Cons* cone1 = new G4Cons("Cone1", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
+	const G4double kDiskThickFrac = 1.00;   // TODOD change here to 0 or 1 - wihtout or with tungeten disk
+    const G4double kDiskOuterFrac = 1.00;   // outer radius relative to fTargetRadius
+    const G4double kDiskPosFrac = 0.25;   // position between target face and detector face (0..1)
 
+    // ------------------------- derived distances ------------------------------------
+    const G4double gapDet = kGapDetFrac * fDetectorLength; // near detector face (both sides)
+    const G4double gapTar = kGapTarFrac * fTargetLength;   // near target face  (both sides)
+
+    // Free space from target face (+z) to detector front face (+z)
+    G4double freeSpan = fdistanceFromTarToDet - 0.5 * fDetectorLength - 0.5 * fTargetLength;
+    if (freeSpan < 0.) freeSpan = 0.;
+
+    // Cones occupy remaining space after gaps; each cone gets half
+    G4double usable = freeSpan - (gapDet + gapTar);
+    if (usable < 0.) usable = 0.;
+    G4double h = 0.5 * usable;               // half-length for G4Cons
+    if (h <= 0.) h = 0.1 * mm;               // minimal non-zero length
+
+    // Centers of the cones (distance from world origin)
+    const G4double zCenter = 0.5 * fTargetLength + gapTar + h;
+
+    // ------------------------------ cone radii --------------------------------------
+    const G4double rmax1 = fTargetRadius;                  // outer at target side
+    const G4double rmin1 = kWallFrac * rmax1;              // inner (wall)
+    const G4double rmax2 = fDetectorRadius;                // outer at detector side
+    const G4double rmin2 = kWallFrac * rmax2;              // inner (wall)
+
+    // ------------------------------ build +Z cone -----------------------------------
+    // For G4Cons: (rmin1,rmax1) are at local -Z face; (rmin2,rmax2) at local +Z face.
+    // Placed at +z without rotation, the local -Z face is nearer the target, which is correct.
+    auto cone1 = new G4Cons("Cone1", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
     fLogicCone1 = new G4LogicalVolume(cone1, fTungstenMater, "LogicCone1");
-    new G4PVPlacement(0, G4ThreeVector(0, 0, h + distanceFromTargetToCone), fLogicCone1, "PhysCone1", fworldLogical, false, 0);
+    new G4PVPlacement(
+        nullptr, G4ThreeVector(0, 0, +zCenter),
+        fLogicCone1, "PhysCone1", fworldLogical, false, 0);
 
-    // Cone to Detector 2
-    G4Cons* cone2 = new G4Cons("Cone2", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
-
+    // ------------------------------ build -Z cone (ROTATED 180°) --------------------
+    // At -z, we must flip the cone so its target-side (small end defined at local -Z face)
+    // also faces the target (toward +Z in global for this placement).
+    auto cone2 = new G4Cons("Cone2", rmin1, rmax1, rmin2, rmax2, h, 0., twopi);
     fLogicCone2 = new G4LogicalVolume(cone2, fTungstenMater, "LogicCone2");
-    new G4PVPlacement(rotation180, G4ThreeVector(0, 0, -h - distanceFromTargetToCone), fLogicCone2, "PhysCone2", fworldLogical, false, 0);
 
-	// TODO - change use of Tungsten disks
-    static const bool kUseTungstenDisks = false;
-    // TODO - CHANGE HERE - do 0.25 mm, 0.05
-    G4double TungstenDiskThickness = 0.001 * mm;
-    if (kUseTungstenDisks) {
-        // disk for cone 1
-        auto tungsten_tube1
-            = new G4Tubs("TungstenTube1", 0, fTargetRadius
-                , 0.5 * TungstenDiskThickness, 0., twopi);
-        fLogicTungstenTube1
-            = new G4LogicalVolume(tungsten_tube1, fTungstenMater, "lTungstenTube1");
-        new G4PVPlacement(0, G4ThreeVector(0, 0, distanceFromTargetToCone + 0.5 * fTargetLength + 0.5 * TungstenDiskThickness), fLogicTungstenTube1, "lTungstenTube1", fworldLogical, false, 0);
+    auto rot180 = new G4RotationMatrix();
+    rot180->rotateX(180. * deg); // flip so target-side is toward the origin
 
+    new G4PVPlacement(
+        rot180, G4ThreeVector(0, 0, -zCenter),
+        fLogicCone2, "PhysCone2", fworldLogical, false, 0);
 
-        // disk for cone 2
-        auto tungsten_tube2
-            = new G4Tubs("TungstenTube2", 0, fTargetRadius
-                , 0.5 * TungstenDiskThickness, 0., twopi);
-        fLogicTungstenTube2
-            = new G4LogicalVolume(tungsten_tube2, fTungstenMater, "lTungstenTube2");
-        new G4PVPlacement(0, G4ThreeVector(0, 0, -distanceFromTargetToCone - 0.5 * fTargetLength - 0.5 * TungstenDiskThickness), fLogicTungstenTube2, "lTungstenTube2", fworldLogical, false, 0);
+    // visuals for cones
+    {
+        G4double alpha = 0.5;
+        auto visCone = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, alpha));
+        fLogicCone1->SetVisAttributes(visCone);
+        fLogicCone2->SetVisAttributes(visCone);
+        fVisAttributes.push_back(visCone);
+    }
 
-        // VisAttributes for Cones
-        G4double transparency = 0.5;
-        auto coneVisAttr1 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
-        fLogicCone1->SetVisAttributes(coneVisAttr1);
-        fLogicTungstenTube1->SetVisAttributes(coneVisAttr1);
-        fVisAttributes.push_back(coneVisAttr1);
+    // ------------------- optional flat tungsten disks (symmetric) -------------------
+	const G4double diskThickness = kDiskThickFrac * 0.05 * mm; // TODO change here the Tungsten disk thickness
+    if (diskThickness > 0.) {
+        const G4double halfDisk = 0.5 * diskThickness;
 
-        auto coneVisAttr2 = new G4VisAttributes(G4Colour(0.0, 0.0, 1.0, transparency)); // blue
-        fLogicCone2->SetVisAttributes(coneVisAttr2);
-        fLogicTungstenTube2->SetVisAttributes(coneVisAttr2);
-        fVisAttributes.push_back(coneVisAttr2);
+        // place between target face and detector face, at a fraction of that span
+        const G4double zRing = 0.75 * fTargetLength;   // Kapton disk position
+        const G4double smallGap = 0.1 * mm;            // tiny separation
+        const G4double zDisk = zRing + smallGap;
+
+        const G4double rDiskOuter = kDiskOuterFrac * fTargetRadius;
+        const G4double rDiskInner = 0.0; // solid disk
+
+        // +Z disk
+        auto sDisk1 = new G4Tubs("TungstenDisk1", rDiskInner, rDiskOuter, halfDisk, 0., twopi);
+        fLogicTungstenTube1 = new G4LogicalVolume(sDisk1, fTungstenMater, "lTungstenTube1");
+        new G4PVPlacement(
+            nullptr, G4ThreeVector(0, 0, +zDisk),
+            fLogicTungstenTube1, "lTungstenTube1", fworldLogical, false, 0);
+
+        // -Z disk
+        auto sDisk2 = new G4Tubs("TungstenDisk2", rDiskInner, rDiskOuter, halfDisk, 0., twopi);
+        fLogicTungstenTube2 = new G4LogicalVolume(sDisk2, fTungstenMater, "lTungstenTube2");
+        new G4PVPlacement(
+            nullptr, G4ThreeVector(0, 0, -zDisk),
+            fLogicTungstenTube2, "lTungstenTube2", fworldLogical, false, 0);
+
+        // visuals for disks
+        auto visDisk = new G4VisAttributes(G4Colour(0.2, 0.2, 0.6, 0.6));
+        fLogicTungstenTube1->SetVisAttributes(visDisk);
+        fLogicTungstenTube2->SetVisAttributes(visDisk);
+        fVisAttributes.push_back(visDisk);
     }
     else {
         fLogicTungstenTube1 = nullptr;
@@ -385,32 +425,43 @@ void DetectorConstruction::BuildTungstenCones() {
     }
 }
 
+
 void DetectorConstruction::BuildKaptonDisks() {
-    // TODO - change ring (true) vs solid disk (false)
-    const G4bool   kAsAnnulus = false;         
-    const G4double kThickness = 0.4 * mm;      // 0.025–0.10 mm works well
-    const G4double kOuterFrac = 5.0;         // OUTER RADIUS = 0.50 * fTargetRadius
-    const G4double kInnerFrac = 0.5;      // ring radial width (material between rmin and rmax)
+    // ---- geometry controls ----
+    const G4bool   kAsAnnulus = false;         // ring (true) vs solid disk (false)
+	const G4double kThickness = 0.4 * mm;    // TODO change Kapton disk thickness here
+    const G4double kRingWidth = 2.0 * mm;     // radial material width outside the hole
+    const G4double kMargin = 1.20;         // 20% safety margin on the LOS hole
 
-    // pick which target radius to reference:
-    const G4double r_ref = fTargetRadius;       // or use fTargetRadiusActive if you prefer
+    // ring z position (you used 0.75 * fTargetLength)
+    const G4double zRing = 0.75 * fTargetLength;   // > 0 (forward). We'll place symmetric +-zRing.
 
-    // compute radii safely
-    const G4double rmax = std::max(0.2 * mm, kOuterFrac * r_ref);
-    const G4double rmin = kAsAnnulus ? kInnerFrac * fTargetRadius : 0.0;
+    // detector geometry we already have
+    const G4double Rdet = fDetectorRadius;
+    const G4double zDetFace = fdistanceFromTarToDet - 0.5 * fDetectorLength; // +z front face distance
 
-    const G4double z = 0.75 * fTargetLength;
+    // --- compute the hole radius that exactly shadows the detector face ---
+    // scale = (distance of ring plane)/(distance of detector face)
+    const G4double scale = (zDetFace > 0.) ? (zRing / zDetFace) : 0.0;
+    G4double rHole = kMargin * Rdet * scale;                // clear aperture at ring plane
+    rHole = std::max(0.2 * mm, rHole);                        // clamp to >=0.2 mm
 
-    // Disk 1 ( +z )
-    auto s1 = new G4Tubs("Kapton1", rmin, rmax, 0.5 * kThickness, 0., twopi);
+    // pick an outer radius. Use at least the old target radius; larger is fine.
+    const G4double rOuter = std::max(fTargetRadius, rHole + kRingWidth);
+
+    // choose inner radius (0 for solid disk, rHole for annulus)
+    const G4double rInner = kAsAnnulus ? rHole : 0.0;
+
+    // ---- build shapes ----
+    auto s1 = new G4Tubs("Kapton1", rInner, rOuter, 0.5 * kThickness, 0., twopi);
     fLogicKapton_tube1 = new G4LogicalVolume(s1, fDiskMater, "lKapton_tube1");
-    new G4PVPlacement(nullptr, { 0,0,+z }, fLogicKapton_tube1, "lKapton_tube1", fworldLogical, false, 0);
+    new G4PVPlacement(nullptr, { 0,0,+zRing }, fLogicKapton_tube1, "lKapton_tube1", fworldLogical, false, 0);
 
-    // Disk 2 ( -z )
-    auto s2 = new G4Tubs("Kapton2", rmin, rmax, 0.5 * kThickness, 0., twopi);
+    auto s2 = new G4Tubs("Kapton2", rInner, rOuter, 0.5 * kThickness, 0., twopi);
     fLogicKapton_tube2 = new G4LogicalVolume(s2, fDiskMater, "lKapton_tube2");
-    new G4PVPlacement(nullptr, { 0,0,-z }, fLogicKapton_tube2, "lKapton_tube2", fworldLogical, false, 0);
+    new G4PVPlacement(nullptr, { 0,0,-zRing }, fLogicKapton_tube2, "lKapton_tube2", fworldLogical, false, 0);
 
+    // ---- visuals ----
     auto vis = new G4VisAttributes(G4Colour(1.0, 0.5, 0.0, 0.5));
     fLogicKapton_tube1->SetVisAttributes(vis);
     fLogicKapton_tube2->SetVisAttributes(vis);
@@ -474,7 +525,7 @@ void DetectorConstruction::BuildField() {
     if (!kIsMagneticField) {
         return;
 	}
-    auto magField = new G4UniformMagField(G4ThreeVector(0., 0., 0.2 * tesla)); // tweak 0.1–0.3 T
+    auto magField = new G4UniformMagField(G4ThreeVector(0.35 * tesla, 0.35 * tesla, 0.)); // tweak 0.1–0.3 T
     auto fieldMgr = G4TransportationManager::GetTransportationManager()->GetFieldManager();
     fieldMgr->SetDetectorField(magField);
     fieldMgr->CreateChordFinder(magField); // simple default chord finder
